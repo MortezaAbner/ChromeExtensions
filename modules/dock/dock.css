@@ -1,0 +1,163 @@
+/* ============ داکر پایین - آبنر (نسخه‌ی نهایی) ============ */
+
+.ab-bottom-dock {
+  position: fixed !important;
+  bottom: 18px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  z-index: 99999 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  padding: 6px 14px !important;
+  border-radius: 40px !important;
+  direction: ltr;
+  /* شیشه‌ای واقعی — بدون رنگ سفید */
+  background: rgba(255, 255, 255, 0.08) !important;
+  backdrop-filter: blur(var(--dash-blur-px, 20px)) saturate(160%) !important;
+  -webkit-backdrop-filter: blur(var(--dash-blur-px, 20px)) saturate(160%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.28) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
+  transition: background 0.3s, border-color 0.3s, box-shadow 0.3s;
+}
+
+.ab-dock-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #1f2937;
+  padding: 0;
+  transition: background 0.2s, transform 0.15s, color 0.2s;
+  outline: none;
+  flex-shrink: 0;
+}
+.ab-dock-btn svg {
+  stroke: currentColor;
+  display: block;
+  transition: stroke 0.2s;
+}
+.ab-dock-btn:hover {
+  background: rgba(0, 0, 0, 0.06);
+  transform: translateY(-1px);
+}
+.ab-dock-btn:active {
+  transform: scale(0.94);
+}
+
+/* دکمه‌ی فعال تم (کادر خاکستری + حلقه) */
+.ab-dock-btn-theme-active {
+  background: rgba(255, 255, 255, 0.9) !important;
+  border: 1.5px solid rgba(31, 41, 55, 0.35) !important;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.5), 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+.ab-dock-btn-theme-active:hover {
+  background: rgba(255, 255, 255, 1) !important;
+}
+
+/* دکمه‌ی مربع آبی A — کوچک‌تر */
+.ab-dock-btn-square {
+  width: 36px !important;
+  height: 36px !important;
+  border-radius: 10px !important;
+  background: #38bdf8 !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 12px rgba(56, 189, 248, 0.4);
+  margin-left: 2px;
+}
+.ab-dock-btn-square:hover {
+  background: #0ea5e9 !important;
+  transform: translateY(-1px) scale(1.04);
+}
+
+.ab-dock-letter {
+  font-size: 15px;
+  font-weight: 900;
+  color: #fff;
+  line-height: 1;
+  letter-spacing: -0.5px;
+}
+
+.ab-dock-divider {
+  width: 1px;
+  height: 24px;
+  background: rgba(31, 41, 55, 0.18);
+  margin: 0 4px;
+  flex-shrink: 0;
+  transition: background 0.3s;
+}
+
+/* ============ آیکون‌های تم ============ */
+
+.ab-theme-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.ab-theme-icon svg { display: block; }
+
+/* ============ داکر در تم دارک ============ */
+
+body.theme-dark .ab-bottom-dock {
+  background: rgba(15, 23, 42, 0.92) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.4) !important;
+}
+body.theme-dark .ab-dock-btn { color: #e2e8f0; }
+body.theme-dark .ab-dock-btn:hover { background: rgba(255, 255, 255, 0.08); }
+body.theme-dark .ab-dock-btn-theme-active {
+  background: rgba(255, 255, 255, 0.12) !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.35) !important;
+}
+body.theme-dark .ab-dock-divider { background: rgba(255, 255, 255, 0.15); }
+
+/* ============ داکر در تم لایت ============ */
+
+body.theme-light .ab-bottom-dock {
+  background: rgba(255, 255, 255, 0.95) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.1) !important;
+}
+body.theme-light .ab-dock-btn { color: #1f2937; }
+body.theme-light .ab-dock-divider { background: rgba(31, 41, 55, 0.15); }
+
+/* ============ موبایل ============ */
+
+@media (max-width: 1024px) {
+  .ab-bottom-dock {
+    bottom: 12px !important;
+    padding: 5px 10px !important;
+    gap: 2px !important;
+  }
+  .ab-dock-btn { width: 38px; height: 38px; }
+  .ab-dock-btn svg { width: 18px; height: 18px; }
+  .ab-dock-btn-square {
+    width: 32px !important;
+    height: 32px !important;
+    border-radius: 9px !important;
+  }
+  .ab-dock-letter { font-size: 13px; }
+  .ab-dock-divider { height: 20px; margin: 0 2px; }
+}
+
+@media (max-width: 480px) {
+  .ab-bottom-dock { padding: 4px 8px !important; }
+  .ab-dock-btn { width: 34px; height: 34px; }
+  .ab-dock-btn svg { width: 16px; height: 16px; }
+  .ab-dock-btn-square {
+    width: 28px !important;
+    height: 28px !important;
+    border-radius: 8px !important;
+  }
+  .ab-dock-letter { font-size: 12px; }
+}
