@@ -1,0 +1,519 @@
+/* ============ ماژول آب‌وهوا - آبنر (نسخه‌ی کامل v7) ============ */
+
+.weather-module {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+/* ردیف بالا: دما چپ، آیکون راست */
+.weather-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  flex-shrink: 0;
+  height: 76px;
+}
+
+.weather-temp-block {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  flex: 1;
+}
+
+.weather-temp {
+  font-size: 40px;
+  font-weight: 900;
+  line-height: 1;
+  color: #7c5cf0;
+  letter-spacing: -1.5px;
+  text-shadow: 0 2px 8px rgba(124, 92, 240, 0.35);
+}
+
+.weather-temp sup {
+  font-size: 18px;
+  font-weight: 800;
+  vertical-align: top;
+  margin-right: 2px;
+}
+
+.weather-icon-block {
+  width: 76px;
+  height: 76px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.weather-icon-block svg {
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 3px 8px rgba(0, 0, 0, 0.35));
+}
+
+.weather-icon-block.animate svg {
+  animation: weatherFloat 3s ease-in-out infinite;
+}
+
+@keyframes weatherFloat {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-3px); }
+}
+
+/* وسط کادر: وضعیت + دماها — دقیقاً وسط عمودی */
+.weather-middle {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  text-align: center;
+  padding-bottom: 22px;  /* ← متن‌ها بالاتر می‌رن */
+}
+
+.weather-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.95);
+  text-align: center;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.8);
+  line-height: 1.2;
+}
+
+.weather-range {
+  text-align: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.85);
+  direction: rtl;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.8);
+  line-height: 1.2;
+}
+
+/* ============ دکمه‌ها — کپی از .widget-actions ============ */
+.weather-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.weather-btn {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.92);
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 6px 8px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.2s;
+  white-space: nowrap;
+  min-height: 30px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.weather-btn:hover { background: rgba(255, 255, 255, 0.18); }
+.weather-btn:active { transform: scale(0.97); }
+
+.weather-btn svg {
+  width: 11px;
+  height: 11px;
+  flex-shrink: 0;
+}
+
+.weather-btn .pin-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #e74c3c;
+  box-shadow: 0 0 0 2px rgba(231, 76, 60, 0.25);
+  flex-shrink: 0;
+}
+
+.weather-btn .loc-name {
+  max-width: 90px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.weather-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.75);
+  font-weight: 600;
+}
+
+/* ============ انیمیشن آیکون‌ها ============ */
+.wx-rays {
+  transform-origin: 32px 32px;
+  animation: wxRaysSpin 12s linear infinite;
+}
+@keyframes wxRaysSpin { to { transform: rotate(360deg); } }
+
+.wx-cloud-float {
+  animation: wxCloudFloat 4s ease-in-out infinite;
+  transform-origin: center;
+}
+@keyframes wxCloudFloat {
+  0%, 100% { transform: translateX(0); }
+  50%      { transform: translateX(2px); }
+}
+
+.wx-rain line { animation: wxRainFall 1.2s linear infinite; }
+.wx-rain line:nth-child(2) { animation-delay: 0.3s; }
+.wx-rain line:nth-child(3) { animation-delay: 0.6s; }
+@keyframes wxRainFall {
+  0%   { opacity: 0; transform: translateY(-3px); }
+  30%  { opacity: 1; }
+  100% { opacity: 0; transform: translateY(3px); }
+}
+
+.wx-snow circle { animation: wxSnowFall 2.5s ease-in-out infinite; }
+.wx-snow circle:nth-child(2) { animation-delay: 0.4s; }
+.wx-snow circle:nth-child(3) { animation-delay: 0.8s; }
+@keyframes wxSnowFall {
+  0%, 100% { opacity: 1; transform: translateY(0); }
+  50%      { opacity: 0.5; transform: translateY(3px); }
+}
+
+.wx-bolt { animation: wxBoltFlash 2s ease-in-out infinite; }
+@keyframes wxBoltFlash {
+  0%, 70%, 100% { opacity: 1; }
+  80%           { opacity: 0.3; }
+  90%           { opacity: 0.9; }
+}
+
+.wx-fog-lines line { animation: wxFogMove 3s ease-in-out infinite; }
+@keyframes wxFogMove {
+  0%, 100% { transform: translateX(0); opacity: 0.7; }
+  50%      { transform: translateX(-3px); opacity: 1; }
+}
+
+/* ============ پنل پیش‌بینی ============ */
+.weather-forecast-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  padding: 12px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, var(--glass-opacity, 0.12)) !important;
+  backdrop-filter: blur(var(--dash-blur-px, 24px)) saturate(160%) !important;
+  -webkit-backdrop-filter: blur(var(--dash-blur-px, 24px)) saturate(160%) !important;
+  border: 1px solid var(--dash-glass-border, rgba(255, 255, 255, 0.25)) !important;
+  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.4);
+  z-index: 100;
+  direction: rtl;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  animation: wPanelIn 0.25s ease;
+}
+.weather-forecast-panel.hidden { display: none; }
+@keyframes wPanelIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.forecast-cities-bar {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-bottom: 2px;
+}
+.forecast-cities-bar::-webkit-scrollbar { display: none; }
+
+.forecast-city-pill {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.9);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.forecast-city-pill:hover { background: rgba(255, 255, 255, 0.18); }
+.forecast-city-pill.active {
+  background: #3b6ef5;
+  border-color: #3b6ef5;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(59, 110, 245, 0.4);
+}
+.forecast-city-pill.add-city {
+  border-style: dashed;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.75);
+}
+.city-del {
+  display: inline-flex;
+  width: 15px;
+  height: 15px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  font-size: 11px;
+  line-height: 1;
+  margin-inline-start: 2px;
+}
+.city-del:hover { background: rgba(239, 68, 68, 0.6); }
+
+.forecast-days-row {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 6px;
+}
+.forecast-day-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 9px 4px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: background 0.2s;
+}
+.forecast-day-card:hover { background: rgba(255, 255, 255, 0.14); }
+.forecast-day-name {
+  font-size: 11.5px;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.95);
+  white-space: nowrap;
+}
+.forecast-day-icon {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.forecast-day-icon svg { width: 100%; height: 100%; }
+.forecast-temp-high { font-size: 13px; font-weight: 900; color: #f87171; }
+.forecast-temp-low  { font-size: 11px; font-weight: 700; color: #60a5fa; }
+
+/* ============ پاپ‌آپ ============ */
+.weather-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(20, 20, 30, 0.35);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999999;
+  padding: 20px;
+  animation: wFadeIn 0.2s ease;
+}
+.weather-modal-overlay.hidden { display: none; }
+@keyframes wFadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.weather-modal {
+  width: 100%;
+  max-width: 440px;
+  padding: 24px 22px 20px;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, var(--glass-opacity, 0.12)) !important;
+  backdrop-filter: blur(var(--dash-blur-px, 24px)) saturate(160%) !important;
+  -webkit-backdrop-filter: blur(var(--dash-blur-px, 24px)) saturate(160%) !important;
+  border: 1px solid var(--dash-glass-border, rgba(255, 255, 255, 0.25)) !important;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+  direction: rtl;
+  color: #fff;
+  animation: wModalIn 0.3s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+}
+@keyframes wModalIn {
+  from { opacity: 0; transform: translateY(20px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.weather-modal h3 {
+  margin: 0 0 6px;
+  font-size: 17px;
+  font-weight: 800;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.weather-modal .modal-sub {
+  margin: 0 0 20px;
+  font-size: 12.5px;
+  color: rgba(255, 255, 255, 0.7);
+  text-align: center;
+}
+
+.weather-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  margin-bottom: 10px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.weather-option:hover {
+  background: rgba(255, 255, 255, 0.16);
+  transform: translateY(-1px);
+}
+.weather-option-text { flex: 1; text-align: right; }
+.weather-option-title { font-size: 14px; font-weight: 800; margin-bottom: 3px; }
+.weather-option-desc { font-size: 11.5px; color: rgba(255, 255, 255, 0.65); }
+.weather-option-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.15);
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.weather-divider {
+  text-align: center;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.55);
+  margin: 16px 0 12px;
+  position: relative;
+}
+.weather-divider::before,
+.weather-divider::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 35%;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.18);
+}
+.weather-divider::before { right: 0; }
+.weather-divider::after  { left: 0; }
+
+.weather-search-input {
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.08);
+  font-family: inherit;
+  font-size: 13.5px;
+  color: #fff;
+  outline: none;
+  box-sizing: border-box;
+  transition: all 0.2s;
+}
+.weather-search-input:focus {
+  border-color: rgba(124, 92, 240, 0.55);
+  background: rgba(255, 255, 255, 0.14);
+}
+.weather-search-input::placeholder { color: rgba(255, 255, 255, 0.45); }
+
+.weather-modal-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+.weather-modal-btn {
+  flex: 1;
+  padding: 12px;
+  border-radius: 14px;
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 800;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+}
+.weather-modal-btn.cancel {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+.weather-modal-btn.cancel:hover { background: rgba(255, 255, 255, 0.16); }
+.weather-modal-btn.confirm {
+  background: #3b6ef5;
+  color: #fff;
+  box-shadow: 0 6px 18px rgba(59, 110, 245, 0.4);
+}
+.weather-modal-btn.confirm:hover { background: #2d5ae0; transform: translateY(-1px); }
+
+.wx-perm-help {
+  margin-top: 14px;
+  padding: 14px;
+  border-radius: 14px;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  direction: rtl;
+}
+.wx-perm-title { font-size: 13px; font-weight: 800; color: #fca5a5; margin-bottom: 6px; }
+.wx-perm-desc {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.85);
+  line-height: 1.7;
+  margin-bottom: 10px;
+}
+.wx-perm-btn {
+  width: 100%;
+  padding: 10px;
+  border-radius: 12px;
+  background: #3b6ef5;
+  color: #fff;
+  border: none;
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.wx-perm-btn:hover { background: #2d5ae0; }
+
+/* ============ موبایل ============ */
+@media (max-width: 1024px) {
+  .weather-forecast-panel {
+    position: relative !important;
+    top: auto !important;
+    margin-top: 10px !important;
+  }
+  .forecast-days-row { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 480px) {
+  .forecast-days-row { grid-template-columns: repeat(3, 1fr); }
+  .weather-temp { font-size: 34px; }
+}

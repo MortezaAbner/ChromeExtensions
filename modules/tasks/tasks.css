@@ -1,0 +1,459 @@
+/* ========================================================
+   ماژول شیشه‌ای تسک و یادداشت آبنر (Abner Tasks & Notes)
+======================================================== */
+.task-module {
+  display: flex !important;
+  flex-direction: column !important;
+  height: 100% !important;
+  box-sizing: border-box !important;
+  position: relative !important;
+  overflow: visible !important;
+  background: transparent !important;
+}
+
+/* تب‌های بالای پنل */
+.abner-task-tabs {
+  display: flex;
+  gap: 6px;
+  padding: 4px;
+  border-radius: 14px;
+  background: rgba(0, 0, 0, 0.25);
+  margin-bottom: 8px;
+}
+
+.abner-tab-btn {
+  flex: 1;
+  padding: 6px 12px;
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 13px;
+  font-weight: 700;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+  text-align: center;
+}
+
+.abner-tab-btn.active {
+  background: var(--dash-accent-color, #2563eb);
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+/* نوار ابزار بالا */
+.abner-task-action-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 8px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.abner-action-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.abner-icon-btn {
+  background: var(--dash-glass-bg, rgba(255, 255, 255, 0.1)) !important;
+  border: 1px solid var(--dash-glass-border, rgba(255, 255, 255, 0.2)) !important;
+  backdrop-filter: blur(var(--dash-blur-px, 16px)) !important;
+  -webkit-backdrop-filter: blur(var(--dash-blur-px, 16px)) !important;
+  color: rgba(255, 255, 255, 0.85);
+  width: 28px;
+  height: 28px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.abner-icon-btn:hover, .abner-icon-btn.active {
+  background: var(--dash-accent-color, #2563eb) !important;
+  color: #fff;
+}
+
+/* اسکرول لیست آیتم‌ها */
+.task-scroll-area {
+  flex: 1 !important;
+  overflow-y: auto !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+  padding-bottom: 85px !important;
+}
+
+/* کارت آیتم شیشه‌ای */
+.abner-card-item {
+  border-radius: 14px;
+  border: 1px solid var(--dash-glass-border, rgba(255, 255, 255, 0.15)) !important;
+  background: var(--dash-glass-bg, rgba(20, 24, 35, 0.4)) !important;
+  backdrop-filter: blur(var(--dash-blur-px, 16px)) !important;
+  -webkit-backdrop-filter: blur(var(--dash-blur-px, 16px)) !important;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: all 0.2s ease;
+  color: #fff;
+}
+
+.abner-card-item.completed {
+  opacity: 0.55;
+}
+
+.abner-card-item.completed .item-title {
+  text-decoration: line-through;
+}
+
+.abner-item-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.abner-item-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.abner-checkbox {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--dash-accent-color, #2563eb);
+  cursor: pointer;
+}
+
+.item-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #ffffff;
+  user-select: none;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.abner-card-desc {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.7);
+  line-height: 1.5;
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* بج‌های مشخصات آیتم */
+.abner-badge-list {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding-top: 2px;
+}
+
+.abner-meta-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px;
+  border-radius: 8px;
+  font-size: 10.5px;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.12);
+  color: #e2e8f0;
+}
+
+.prio-low { background: rgba(34, 197, 94, 0.2); color: #4ade80; }
+.prio-med { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
+.prio-high { background: rgba(239, 68, 68, 0.25); color: #f87171; }
+
+.note-pin-badge {
+  color: #facc15;
+  margin-inline-end: 4px;
+}
+
+/* دکمه‌های هاور */
+.abner-item-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.abner-card-item:hover .abner-item-actions {
+  opacity: 1;
+}
+
+.abner-mini-action {
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+  border-radius: 6px;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.abner-mini-action:hover {
+  background: var(--dash-accent-color, #2563eb);
+  color: #fff;
+}
+
+/* پنل ورودی فرم پایین */
+.abner-form-panel {
+  position: absolute !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  padding: 8px 12px !important;
+  border-radius: 16px !important;
+  background: var(--dash-glass-bg, rgba(20, 24, 35, 0.65)) !important;
+  backdrop-filter: blur(var(--dash-blur-px, 20px)) !important;
+  -webkit-backdrop-filter: blur(var(--dash-blur-px, 20px)) !important;
+  border: 1px solid var(--dash-glass-border, rgba(255, 255, 255, 0.2)) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 6px !important;
+  z-index: 20 !important;
+}
+
+.abner-input-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.abner-input-row input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #fff;
+  font-size: 13px;
+  font-family: inherit;
+  font-weight: 600;
+}
+
+.abner-input-row input::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.abner-btn-submit {
+  background: var(--dash-accent-color, #2563eb);
+  color: #fff;
+  border: none;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s;
+}
+
+.abner-btn-submit:hover {
+  transform: scale(1.08);
+}
+
+/* نوار ابزار فرم */
+.abner-form-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow-x: auto;
+  padding-top: 2px;
+}
+
+.abner-chip-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.85);
+  border-radius: 14px;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.abner-chip-btn:hover, .abner-chip-btn.active {
+  background: var(--dash-accent-color, #2563eb);
+  color: #fff;
+  border-color: transparent;
+}
+
+/* پاپ‌آپ‌های ابزار شناور */
+.abner-glass-popover {
+  position: absolute;
+  bottom: 80px;
+  background: var(--dash-glass-bg, rgba(20, 24, 35, 0.9)) !important;
+  backdrop-filter: blur(var(--dash-blur-px, 24px)) !important;
+  -webkit-backdrop-filter: blur(var(--dash-blur-px, 24px)) !important;
+  border: 1px solid var(--dash-glass-border, rgba(255, 255, 255, 0.25)) !important;
+  border-radius: 16px;
+  padding: 8px;
+  box-shadow: 0 14px 35px rgba(0, 0, 0, 0.5);
+  color: #fff;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  animation: abnerPopIn 0.18s ease-out;
+}
+
+.abner-glass-popover.hidden {
+  display: none !important;
+}
+
+.popover-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.popover-item:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.prio-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+/* پنجره مدال ویرایش آیتم */
+.abner-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 999999;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  direction: rtl;
+  animation: abnerFadeIn 0.2s ease;
+}
+
+.abner-modal-card {
+  width: 90%;
+  max-width: 440px;
+  border-radius: 24px;
+  padding: 20px;
+  background: var(--dash-glass-bg, rgba(20, 24, 35, 0.75)) !important;
+  backdrop-filter: blur(var(--dash-blur-px, 24px)) !important;
+  -webkit-backdrop-filter: blur(var(--dash-blur-px, 24px)) !important;
+  border: 1px solid var(--dash-glass-border, rgba(255, 255, 255, 0.25)) !important;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  color: #fff;
+  animation: abnerScaleUp 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.abner-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.abner-modal-header h3 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.abner-modal-input, .abner-modal-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  padding: 10px 14px;
+  color: #fff;
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+}
+
+.abner-modal-textarea {
+  resize: none;
+  min-height: 80px;
+}
+
+.abner-modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.abner-btn-primary {
+  background: var(--dash-accent-color, #2563eb);
+  color: #fff;
+  border: none;
+  padding: 8px 18px;
+  border-radius: 12px;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.abner-btn-secondary {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 8px 14px;
+  border-radius: 12px;
+  font-size: 12px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+@keyframes abnerPopIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes abnerFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes abnerScaleUp {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}

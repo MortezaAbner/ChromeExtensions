@@ -1,0 +1,434 @@
+/* ========================================================
+   ماژول بوکمارک و پوشه‌های شیشه‌ای آبنر — نسخه‌ی نهایی
+======================================================== */
+
+/* ---------- رپر اصلی ---------- */
+
+.abner-bookmarks-wrapper {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box;
+  margin-top: 14px;
+  direction: rtl;
+  user-select: none;
+  font-family: inherit;
+  background: transparent !important;
+  border: none !important;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  align-self: stretch !important;
+  flex-grow: 1 !important;
+}
+
+/* ========================================================
+   نوار پوشه‌ها
+======================================================== */
+
+.ab-folders-bar {
+  width: 100% !important;
+  min-height: 40px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  white-space: nowrap;
+  scrollbar-width: none;
+  padding: 2px 0;
+}
+.ab-folders-bar::-webkit-scrollbar { display: none; }
+
+.ab-folder-pill {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  height: 38px;
+  padding: 0 18px;
+  box-sizing: border-box;
+  background: var(--dash-glass-bg, rgba(255, 255, 255, var(--glass-opacity, 0.12))) !important;
+  backdrop-filter: blur(var(--dash-blur-px, var(--glass-blur, 16px))) !important;
+  -webkit-backdrop-filter: blur(var(--dash-blur-px, var(--glass-blur, 16px))) !important;
+  border: 1px solid var(--dash-glass-border, rgba(255, 255, 255, 0.2)) !important;
+  color: rgba(255, 255, 255, 0.92);
+  border-radius: 19px;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.ab-folder-pill.active {
+  background: #2563eb !important;
+  border-color: #3b82f6 !important;
+  color: #fff !important;
+  box-shadow: 0 0 12px rgba(37, 99, 235, 0.45);
+}
+
+.ab-folder-pill.add-folder-btn {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1px dashed rgba(255, 255, 255, 0.35) !important;
+}
+
+.ab-folder-pill:hover {
+  background: rgba(255, 255, 255, 0.22) !important;
+}
+
+.ab-folder-more-btn {
+  display: none;
+  background: transparent;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  padding: 0 2px;
+  font-size: 11px;
+  margin-right: 4px;
+}
+.ab-folder-pill:hover .ab-folder-more-btn { display: inline-block; }
+
+/* ========================================================
+   شبکه‌ی بوکمارک — سایز ثابت ۹۶×۹۶ در همه‌ی شرایط
+======================================================== */
+
+.ab-bm-grid-matrix {
+  display: grid !important;
+  grid-template-columns: repeat(6, 96px) !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box;
+}
+
+.ab-bm-slot {
+  position: relative;
+  width: 96px !important;
+  height: 96px !important;
+  min-width: 96px !important;
+  max-width: 96px !important;
+  min-height: 96px !important;
+  max-height: 96px !important;
+  box-sizing: border-box;
+  background: var(--dash-glass-bg, rgba(255, 255, 255, var(--glass-opacity, 0.12))) !important;
+  backdrop-filter: blur(var(--dash-blur-px, var(--glass-blur, 16px))) !important;
+  -webkit-backdrop-filter: blur(var(--dash-blur-px, var(--glass-blur, 16px))) !important;
+  border: 1px solid var(--dash-glass-border, rgba(255, 255, 255, 0.2)) !important;
+  border-radius: 20px;
+  padding: 8px 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  text-decoration: none;
+  color: #fff;
+  cursor: pointer;
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.ab-bm-slot:hover {
+  transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.22) !important;
+  border-color: rgba(255, 255, 255, 0.4) !important;
+}
+
+.ab-bm-slot.fixed-quick-card {
+  border: 1.5px dashed #38bdf8 !important;
+  background: rgba(56, 189, 248, 0.12) !important;
+}
+
+.ab-bm-slot.add-new-slot {
+  border: 1px dashed rgba(255, 255, 255, 0.35) !important;
+  background: rgba(255, 255, 255, 0.06) !important;
+}
+.ab-bm-slot.add-new-slot:hover {
+  background: rgba(255, 255, 255, 0.18) !important;
+  border-color: rgba(255, 255, 255, 0.55) !important;
+}
+
+/* آیکون داخل بوکمارک */
+.ab-bm-slot-icon {
+  width: 44px !important;
+  height: 44px !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.ab-bm-slot-icon img {
+  width: 44px !important;
+  height: 44px !important;
+  max-width: 44px !important;
+  max-height: 44px !important;
+  border-radius: 12px;
+  object-fit: contain;
+}
+
+.ab-bm-slot-icon svg {
+  width: 34px;
+  height: 34px;
+}
+
+/* عنوان داخل بوکمارک */
+.ab-bm-slot-title {
+  font-size: 12.5px;
+  font-weight: 700;
+  text-align: center;
+  max-width: 96%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* دکمه سه‌نقطه */
+.ab-bm-dots-btn {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  display: none;
+  background: rgba(0, 0, 0, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #fff;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  cursor: pointer;
+  z-index: 2;
+}
+.ab-bm-slot:hover .ab-bm-dots-btn { display: flex; }
+
+/* ========================================================
+   منوی راست‌کلیک و زیرمنو
+======================================================== */
+
+.ab-context-menu {
+  position: fixed;
+  z-index: 10050;
+  width: 210px;
+  background: var(--dash-glass-bg, rgba(255, 255, 255, var(--glass-opacity, 0.18))) !important;
+  backdrop-filter: blur(var(--dash-blur-px, var(--glass-blur, 24px))) !important;
+  -webkit-backdrop-filter: blur(var(--dash-blur-px, var(--glass-blur, 24px))) !important;
+  border: 1px solid var(--dash-glass-border, rgba(255, 255, 255, 0.25)) !important;
+  border-radius: 14px;
+  padding: 6px;
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.35);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  direction: rtl;
+  color: #fff;
+}
+
+.ab-context-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  color: #fff;
+  width: 100%;
+  text-align: right;
+  transition: background 0.15s;
+  box-sizing: border-box;
+  font-family: inherit;
+}
+
+.ab-context-item:hover { background: rgba(255, 255, 255, 0.2) !important; }
+.ab-context-item.danger { color: #f87171; }
+
+.ab-context-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.15);
+  margin: 4px 0;
+}
+
+.ab-submenu-wrapper { position: relative; }
+
+.ab-submenu {
+  position: absolute;
+  top: 0;
+  left: 100%;
+  margin-left: 6px;
+  width: 160px;
+  background: var(--dash-glass-bg, rgba(255, 255, 255, var(--glass-opacity, 0.22))) !important;
+  backdrop-filter: blur(var(--dash-blur-px, var(--glass-blur, 24px))) !important;
+  -webkit-backdrop-filter: blur(var(--dash-blur-px, var(--glass-blur, 24px))) !important;
+  border: 1px solid var(--dash-glass-border, rgba(255, 255, 255, 0.25)) !important;
+  border-radius: 12px;
+  padding: 4px;
+  display: none;
+  flex-direction: column;
+  gap: 2px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+.ab-submenu-wrapper:hover .ab-submenu { display: flex; }
+
+.ab-sub-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 10px;
+  border-radius: 6px;
+  font-size: 12.5px;
+  cursor: pointer;
+  color: #fff;
+}
+.ab-sub-item:hover { background: rgba(255, 255, 255, 0.18) !important; }
+.ab-sub-item.current-folder { color: #38bdf8; font-weight: bold; }
+
+/* ========================================================
+   پاپ‌آپ‌های فرم و ویرایش
+======================================================== */
+
+.ab-popup-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  z-index: 10060;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ab-popup-card {
+  width: 90%;
+  max-width: 380px;
+  background: var(--dash-glass-bg, rgba(255, 255, 255, var(--glass-opacity, 0.15))) !important;
+  backdrop-filter: blur(var(--dash-blur-px, var(--glass-blur, 24px))) !important;
+  -webkit-backdrop-filter: blur(var(--dash-blur-px, var(--glass-blur, 24px))) !important;
+  border: 1px solid var(--dash-glass-border, rgba(255, 255, 255, 0.25)) !important;
+  border-radius: 20px;
+  padding: 22px;
+  box-sizing: border-box;
+  color: #ffffff;
+  direction: rtl;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+}
+
+.ab-popup-title {
+  margin: 0 0 16px 0;
+  font-size: 16px;
+  font-weight: 800;
+  text-align: right;
+  color: #ffffff;
+}
+
+.ab-popup-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.ab-popup-tab {
+  padding: 9px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.ab-popup-tab.active {
+  background: #2563eb;
+  border-color: #3b82f6;
+  color: #fff;
+  box-shadow: 0 0 10px rgba(37, 99, 235, 0.4);
+}
+
+.ab-popup-inputs {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.ab-popup-input {
+  width: 100%;
+  box-sizing: border-box;
+  background: rgba(255, 255, 255, 0.1) !important;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.22) !important;
+  border-radius: 12px;
+  padding: 11px 14px;
+  color: #ffffff !important;
+  font-size: 13.5px;
+  font-weight: 600;
+  outline: none;
+  font-family: inherit;
+  transition: border-color 0.2s, background 0.2s;
+}
+.ab-popup-input::placeholder { color: rgba(255, 255, 255, 0.5); }
+.ab-popup-input:focus {
+  border-color: #3b82f6 !important;
+  background: rgba(255, 255, 255, 0.16) !important;
+}
+
+.ab-popup-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.ab-popup-btn {
+  padding: 11px;
+  border-radius: 12px;
+  font-size: 13.5px;
+  font-weight: 800;
+  cursor: pointer;
+  border: none;
+  font-family: inherit;
+  text-align: center;
+  transition: all 0.2s;
+}
+.ab-popup-btn.primary {
+  background: #2563eb;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
+}
+.ab-popup-btn.primary:hover { background: #1d4ed8; }
+.ab-popup-btn.secondary {
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  color: #fff;
+}
+.ab-popup-btn.secondary:hover { background: rgba(255, 255, 255, 0.2); }
+
+/* ========================================================
+   ریسپانسیو — سایز بوکمارک در همه حال ۹۶×۹۶ قفل
+======================================================== */
+
+@media (max-width: 900px) {
+  .ab-bm-grid-matrix {
+    grid-template-columns: repeat(6, 96px) !important;
+    gap: 8px !important;
+  }
+}
+
+@media (max-width: 650px) {
+  .ab-bm-grid-matrix {
+    grid-template-columns: repeat(4, 96px) !important;
+    gap: 8px !important;
+    justify-content: center !important;
+  }
+}
