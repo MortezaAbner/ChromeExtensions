@@ -206,13 +206,15 @@ body {
 }
 
 /* ساعت و آب‌وهوا: مربع */
+.widgets-top-row {
+  position: relative !important;
+}
 .widgets-top-row > .clock-widget,
 .widgets-top-row > .weather-module {
   width: 100% !important;
-  aspect-ratio: 1 / 1 !important;
-  height: auto !important;
-  min-height: 0 !important;
-  max-height: none !important;
+  height: 195px !important;
+  min-height: 195px !important;
+  max-height: 195px !important;
   box-sizing: border-box !important;
   border-radius: 20px !important;
   overflow: hidden !important;
@@ -223,6 +225,22 @@ body {
   gap: 5px !important;
 }
 
+/* موبایل: کارت‌ها کنار هم، هم‌اندازه، هم‌ارتفاع */
+@media (max-width: 1024px) {
+  .widgets-top-row {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
+  }
+    .widgets-top-row > .clock-widget,
+  .widgets-top-row > .weather-module {
+    height: 175px !important;
+    min-height: 175px !important;
+    max-height: 175px !important;
+  }
+  .clock-time { font-size: 24px !important; letter-spacing: -0.5px !important; }
+  .clock-day  { font-size: 14px !important; }
+  .date-month, .date-num { font-size: 11.5px !important; }
+}
 .left-module > .calendar-module {
   width: 100% !important;
   max-width: 100% !important;
@@ -536,4 +554,286 @@ flex: 1;
   .clock-time { font-size: 28px; }
   .clock-day { font-size: 14px; }
   .date-num, .date-month { font-size: 11.5px; }
+}
+/* ============================================================
+   سیستم تم سه‌حالته: dark | light | glass
+============================================================ */
+
+/* ============ تم تاریک ============ */
+
+body.theme-dark {
+  background-color: #0f172a;
+  color: #e2e8f0;
+}
+
+body.theme-dark .wallpaper-background {
+  background:
+    radial-gradient(circle at 50% 60%, rgba(180, 30, 30, 0.35), transparent 55%),
+    radial-gradient(circle at 20% 25%, rgba(200, 90, 20, 0.25), transparent 50%),
+    linear-gradient(180deg, #0f172a 0%, #020617 100%) !important;
+}
+
+body.theme-dark .glass-panel,
+body.theme-dark .task-module,
+body.theme-dark .search-pill,
+body.theme-dark .clock-widget,
+body.theme-dark .weather-module,
+body.theme-dark .calendar-module,
+body.theme-dark .task-row,
+body.theme-dark .task-bottom-input input,
+body.theme-dark .ab-bm-slot,
+body.theme-dark .ab-folder-pill,
+body.theme-dark .ab-search-bar {
+  background: rgba(15, 23, 42, 0.85) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* ============ تم روشن ============ */
+
+body.theme-light {
+  background-color: #e2e8f0;
+  color: #1f2937;
+}
+
+body.theme-light .wallpaper-background {
+  background:
+    radial-gradient(circle at 50% 60%, rgba(251, 191, 36, 0.4), transparent 55%),
+    radial-gradient(circle at 15% 20%, rgba(56, 189, 248, 0.35), transparent 50%),
+    linear-gradient(180deg, #f8fafc 0%, #cbd5e1 100%) !important;
+}
+
+body.theme-light .glass-panel,
+body.theme-light .task-module,
+body.theme-light .search-pill,
+body.theme-light .clock-widget,
+body.theme-light .weather-module,
+body.theme-light .calendar-module,
+body.theme-light .task-row,
+body.theme-light .task-bottom-input input,
+body.theme-light .ab-bm-slot,
+body.theme-light .ab-folder-pill,
+body.theme-light .ab-search-bar {
+  background: rgba(255, 255, 255, 0.92) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08) !important;
+}
+
+/* متن‌های روشن → تیره */
+/* ============ تم روشن (کرم گرم با تضاد بالا) ============ */
+
+body.theme-light {
+  background-color: #ece5d8;
+  color: #1a1612;
+}
+
+body.theme-light .wallpaper-background {
+  background:
+    radial-gradient(circle at 75% 70%, rgba(255, 183, 94, 0.55), transparent 55%),
+    radial-gradient(circle at 20% 25%, rgba(129, 199, 245, 0.55), transparent 55%),
+    radial-gradient(circle at 50% 100%, rgba(255, 138, 128, 0.35), transparent 60%),
+    linear-gradient(160deg, #f5efe3 0%, #d9cfb8 100%) !important;
+}
+
+body.theme-light .glass-panel,
+body.theme-light .task-module,
+body.theme-light .search-pill,
+body.theme-light .clock-widget,
+body.theme-light .weather-module,
+body.theme-light .calendar-module,
+body.theme-light .task-row,
+body.theme-light .task-bottom-input input,
+body.theme-light .ab-bm-slot,
+body.theme-light .ab-folder-pill,
+body.theme-light .ab-search-bar {
+  background: rgba(255, 252, 245, 0.85) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: 1px solid rgba(120, 90, 50, 0.15) !important;
+  box-shadow: 0 8px 24px rgba(80, 50, 20, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8) !important;
+}
+
+/* ---------- متن‌های اصلی → تیره گرم ---------- */
+
+body.theme-light .clock-day,
+body.theme-light .date-month,
+body.theme-light .cal-nav h4,
+body.theme-light .cal-sub,
+body.theme-light .cal-grid span,
+body.theme-light .cal-grid .th,
+body.theme-light .weather-status,
+body.theme-light .weather-range,
+body.theme-light .task-row label,
+body.theme-light .ab-engine-text,
+body.theme-light .search-pill input,
+body.theme-light .ab-search-input,
+body.theme-light .forecast-day-name,
+body.theme-light .forecast-city-current span {
+  color: #2a1f14 !important;
+  text-shadow: none !important;
+}
+
+/* ساعت — رنگ آبی گرم‌تر */
+body.theme-light .clock-time {
+  color: #c2410c !important;
+  text-shadow: 0 2px 6px rgba(194, 65, 12, 0.25) !important;
+}
+
+/* دما — بنفش تیره */
+body.theme-light .weather-temp {
+  color: #6d28d9 !important;
+  text-shadow: 0 2px 6px rgba(109, 40, 217, 0.2) !important;
+}
+
+/* تاریخ‌ها */
+body.theme-light .date-num {
+  color: #6b5544 !important;
+  text-shadow: none !important;
+}
+
+/* ---------- دکمه‌ها ---------- */
+
+body.theme-light .cal-nav button,
+body.theme-light .widget-actions button,
+body.theme-light .cal-bottom-bar button {
+  color: #2a1f14 !important;
+  border-color: rgba(120, 90, 50, 0.2) !important;
+  background: rgba(120, 90, 50, 0.06) !important;
+}
+body.theme-light .widget-actions button:hover,
+body.theme-light .cal-bottom-bar button:hover {
+  background: rgba(120, 90, 50, 0.14) !important;
+}
+
+body.theme-light .tab-btn {
+  color: rgba(42, 31, 20, 0.7) !important;
+}
+body.theme-light .tab-btn.active {
+  color: #fff !important;
+  background: #c2410c !important;
+}
+
+/* ---------- تقویم ---------- */
+
+body.theme-light .cal-grid .active-day {
+  background: #c2410c !important;
+  color: #fff !important;
+}
+body.theme-light .holiday {
+  color: #dc2626 !important;
+}
+
+/* ---------- اوقات شرعی و آب‌وهوا در لایت ---------- */
+
+body.theme-light .prayer-lbl,
+body.theme-light .prayer-time,
+body.theme-light .prayer-sky-label {
+  color: #2a1f14 !important;
+}
+
+body.theme-light .forecast-temp-high { color: #b91c1c !important; }
+body.theme-light .forecast-temp-low  { color: #1d4ed8 !important; }
+
+/* ---------- ورودی‌ها ---------- */
+
+body.theme-light .task-bottom-input input::placeholder,
+body.theme-light .ab-search-input::placeholder,
+body.theme-light .search-pill input::placeholder {
+  color: rgba(42, 31, 20, 0.45) !important;
+}
+
+/* ============ تم شیشه (پیش‌فرض) ============ */
+
+body.theme-glass {
+  color: #ffffff;
+}
+
+/* ============ پس‌زمینه شیشه‌ای — شفق قطبی مینیمال ============ */
+
+body.theme-glass .wallpaper-background {
+  background:
+    /* شفق سبز فسفوری — نوار عمودی از بالا */
+    radial-gradient(ellipse 55% 80% at 30% 0%, rgba(34, 197, 94, 0.55), transparent 65%),
+    radial-gradient(ellipse 45% 70% at 55% 10%, rgba(16, 185, 129, 0.45), transparent 65%),
+    radial-gradient(ellipse 50% 75% at 75% 5%, rgba(52, 211, 153, 0.4), transparent 65%),
+
+    /* بازتاب سبز کمرنگ در پایین */
+    radial-gradient(ellipse 60% 40% at 40% 100%, rgba(34, 197, 94, 0.25), transparent 70%),
+
+    /* آبی آسمانی — درخشش ملایم وسط */
+    radial-gradient(ellipse 70% 55% at 50% 50%, rgba(56, 189, 248, 0.22), transparent 70%),
+
+    /* گرادیان پایه‌ی سرمه‌ای شبانه */
+    linear-gradient(180deg, #051b2e 0%, #041220 40%, #020a14 100%);
+  background-size: cover;
+  background-position: center;
+}
+body.theme-glass .wallpaper-background::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse 80% 60% at 50% 40%,
+    rgba(56, 189, 248, 0.08),
+    transparent 75%
+  );
+  pointer-events: none;
+}
+
+/* گرادیان‌های شیشه‌ای روی کارت‌ها */
+body.theme-glass .glass-panel,
+body.theme-glass .task-module,
+body.theme-glass .search-pill,
+body.theme-glass .clock-widget,
+body.theme-glass .weather-module,
+body.theme-glass .calendar-module,
+body.theme-glass .ab-search-bar {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.14) 0%,
+    rgba(255, 255, 255, 0.06) 50%,
+    rgba(255, 255, 255, 0.1) 100%
+  ) !important;
+  backdrop-filter: blur(var(--dash-blur-px, 20px)) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(var(--dash-blur-px, 20px)) saturate(180%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.28) !important;
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.05) !important;
+}
+
+/* متن‌های روشن در شیشه */
+body.theme-glass .clock-day,
+body.theme-glass .date-month,
+body.theme-glass .cal-nav h4,
+body.theme-glass .weather-status,
+body.theme-glass .weather-range,
+body.theme-glass .task-row label,
+body.theme-glass .ab-engine-text,
+body.theme-glass .search-pill input,
+body.theme-glass .ab-search-input,
+body.theme-glass .forecast-day-name,
+body.theme-glass .forecast-city-current span {
+  color: #f8fafc !important;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.7) !important;
+}
+
+body.theme-glass .date-num {
+  color: rgba(248, 250, 252, 0.9) !important;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.7) !important;
+}
+
+body.theme-glass .clock-time {
+  color: #60a5fa !important;
+  text-shadow: 0 2px 8px rgba(96, 165, 250, 0.5) !important;
+}
+
+body.theme-glass .weather-temp {
+  color: #a78bfa !important;
+  text-shadow: 0 2px 8px rgba(167, 139, 250, 0.5) !important;
 }
