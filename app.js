@@ -5,6 +5,7 @@ import { initClock } from './modules/clock/clock.js';
 import { initPrayer } from './modules/prayer/prayer.js';
 import { initTimer } from './modules/timer/timer.js';
 import { initSearch } from './modules/search/search.js';
+import { initDock } from './modules/dock/dock.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   initGlass();
@@ -14,6 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initPrayer();
   initTimer();
   initSearch();
+  initDock();
 
   // بستن همه‌ی پنل‌ها با کلیک بیرون
   document.addEventListener('click', (e) => {
