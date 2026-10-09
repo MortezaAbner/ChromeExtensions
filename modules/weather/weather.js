@@ -1,4 +1,4 @@
-/* ============ ماژول آب‌وهوا - آبنر v5 ============ */
+/* ============ ماژول آب‌وهوا - آبنر v7 ============ */
 
 const CITIES_KEY = 'abner_weather_cities';
 const MAIN_LOC_KEY = 'abner_weather_main';
@@ -13,7 +13,55 @@ let forecastLoc = null;
 let modalMode = 'main';
 let cachedData = {};
 
-/* ---------- نگاشت کد آب‌وهوا ---------- */
+const POPULAR_CITIES = [
+  { name: 'تهران', lat: 35.6892, lon: 51.3890 },
+  { name: 'مشهد', lat: 36.2972, lon: 59.6067 },
+  { name: 'اصفهان', lat: 32.6546, lon: 51.6679 },
+  { name: 'شیراز', lat: 29.5918, lon: 52.5837 },
+  { name: 'تبریز', lat: 38.0800, lon: 46.2919 },
+  { name: 'کرج', lat: 35.8355, lon: 50.9915 },
+  { name: 'اهواز', lat: 31.3183, lon: 48.6706 },
+  { name: 'قم', lat: 34.6416, lon: 50.8746 },
+  { name: 'کرمانشاه', lat: 34.3142, lon: 47.0650 },
+  { name: 'رشت', lat: 37.2808, lon: 49.5832 },
+  { name: 'یزد', lat: 31.8974, lon: 54.3569 },
+  { name: 'ارومیه', lat: 37.5527, lon: 45.0761 },
+  { name: 'زاهدان', lat: 29.4963, lon: 60.8629 },
+  { name: 'کرمان', lat: 30.2839, lon: 57.0834 },
+  { name: 'همدان', lat: 34.7983, lon: 48.5148 },
+  { name: 'بندرعباس', lat: 27.1832, lon: 56.2666 },
+  { name: 'اراک', lat: 34.0917, lon: 49.6892 },
+  { name: 'ساری', lat: 36.5633, lon: 53.0601 },
+  { name: 'قزوین', lat: 36.2688, lon: 50.0041 },
+  { name: 'سنندج', lat: 35.3115, lon: 46.9961 },
+  { name: 'گرگان', lat: 36.8427, lon: 54.4437 },
+  { name: 'بوشهر', lat: 28.9234, lon: 50.8200 },
+  { name: 'کابل', lat: 34.5553, lon: 69.2075 },
+  { name: 'هرات', lat: 34.3529, lon: 62.2040 },
+  { name: 'بغداد', lat: 33.3152, lon: 44.3661 },
+  { name: 'استانبول', lat: 41.0082, lon: 28.9784 },
+  { name: 'دبی', lat: 25.2048, lon: 55.2708 },
+  { name: 'دوحه', lat: 25.2854, lon: 51.5310 },
+  { name: 'مسکو', lat: 55.7558, lon: 37.6173 },
+  { name: 'لندن', lat: 51.5074, lon: -0.1278 },
+  { name: 'پاریس', lat: 48.8566, lon: 2.3522 },
+  { name: 'برلین', lat: 52.5200, lon: 13.4050 },
+  { name: 'رم', lat: 41.9028, lon: 12.4964 },
+  { name: 'مادرید', lat: 40.4168, lon: -3.7038 },
+  { name: 'نیویورک', lat: 40.7128, lon: -74.0060 },
+  { name: 'لس آنجلس', lat: 34.0522, lon: -118.2437 },
+  { name: 'تورنتو', lat: 43.6532, lon: -79.3832 },
+  { name: 'واشنگتن', lat: 38.9072, lon: -77.0369 },
+  { name: 'توکیو', lat: 35.6762, lon: 139.6503 },
+  { name: 'پکن', lat: 39.9042, lon: 116.4074 },
+  { name: 'شانگهای', lat: 31.2304, lon: 121.4737 },
+  { name: 'سئول', lat: 37.5665, lon: 126.9780 },
+  { name: 'سیدنی', lat: -33.8688, lon: 151.2093 },
+  { name: 'قاهره', lat: 30.0444, lon: 31.2357 },
+  { name: 'ریاض', lat: 24.7136, lon: 46.6753 },
+  { name: 'کویت', lat: 29.3759, lon: 47.9774 }
+];
+
 function getWeatherInfo(code, isDay) {
   const map = {
     0:{t:'آسمان صاف',i:'sun'}, 1:{t:'تقریباً صاف',i:'sun-cloud'},
@@ -42,7 +90,6 @@ function getWeatherInfo(code, isDay) {
   return { text: info.t, icon };
 }
 
-/* ---------- فاز واقعی ماه ---------- */
 function getMoonPhase(date) {
   const synodic = 29.530588853;
   const knownNewMoon = Date.UTC(2000, 0, 6, 18, 14) / 86400000;
@@ -59,39 +106,30 @@ function getMoonSVG(phase, size) {
   const c = size / 2;
   const r = size * 0.22;
 
-  // ماه نو
   if (phase < 0.03 || phase > 0.97) {
     return open + `<circle cx="${c}" cy="${c}" r="${r}" fill="${dark}" stroke="${color}" stroke-width="1.2"/>` + close;
   }
-  // هلال افزاینده
   if (phase < 0.22) {
     return open + `<path d="M${c} ${c-r} a${r} ${r} 0 1 0 0 ${r*2} a${r*0.78} ${r} 0 0 1 0 ${-r*2}z" fill="${color}"/>` + close;
   }
-  // نیمه اول
   if (phase < 0.28) {
     return open + `<path d="M${c} ${c-r} a${r} ${r} 0 1 0 0 ${r*2}z" fill="${color}"/>` + close;
   }
-  // کوژ افزاینده
   if (phase < 0.47) {
     return open + `<circle cx="${c}" cy="${c}" r="${r}" fill="${color}"/><ellipse cx="${c - r*0.42}" cy="${c}" rx="${r*0.75}" ry="${r}" fill="${dark}"/>` + close;
   }
-  // ماه کامل
   if (phase < 0.53) {
     return open + `<circle cx="${c}" cy="${c}" r="${r}" fill="${color}"/><circle cx="${c-4}" cy="${c-4}" r="2" fill="${dark}"/><circle cx="${c+4}" cy="${c-6}" r="1.5" fill="${dark}"/><circle cx="${c+3}" cy="${c+5}" r="2" fill="${dark}"/><circle cx="${c-5}" cy="${c+3}" r="1.3" fill="${dark}"/>` + close;
   }
-  // کوژ کاهنده
   if (phase < 0.72) {
     return open + `<circle cx="${c}" cy="${c}" r="${r}" fill="${color}"/><ellipse cx="${c + r*0.42}" cy="${c}" rx="${r*0.75}" ry="${r}" fill="${dark}"/>` + close;
   }
-  // نیمه دوم
   if (phase < 0.78) {
     return open + `<path d="M${c} ${c-r} a${r} ${r} 0 1 1 0 ${r*2}z" fill="${color}"/>` + close;
   }
-  // هلال کاهنده
   return open + `<path d="M${c} ${c-r} a${r} ${r} 0 1 1 0 ${r*2} a${r*0.78} ${r} 0 0 0 0 ${-r*2}z" fill="${color}"/>` + close;
 }
 
-/* ---------- آیکون‌های آب‌وهوا ---------- */
 function getWeatherSVG(type) {
   const sun = `<g class="wx-rays" stroke="#FFB300" stroke-width="2.5" stroke-linecap="round"><line x1="24" y1="4" x2="24" y2="9"/><line x1="6" y1="22" x2="11" y2="22"/><line x1="12" y1="10" x2="15" y2="13"/></g><circle cx="24" cy="22" r="9" fill="#FFCC33"/>`;
   const cloud = `<path class="wx-cloud-float" d="M22 44a10 10 0 0 1 1-20 13 13 0 0 1 23 4 9 9 0 0 1-2 16z" fill="#E8ECF1"/>`;
@@ -123,7 +161,6 @@ function getWeatherSVG(type) {
   return svgs[type] || svgs.cloud;
 }
 
-/* ---------- API ---------- */
 async function fetchWeather(lat, lon) {
   const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
     `&current=temperature_2m,weather_code,is_day&daily=weather_code,temperature_2m_max,temperature_2m_min` +
@@ -175,7 +212,6 @@ async function fetchByGPS() {
   });
 }
 
-/* ---------- ذخیره ---------- */
 function persist() {
   try {
     localStorage.setItem(CITIES_KEY, JSON.stringify(cities));
@@ -195,7 +231,6 @@ function addCity(loc) {
   return id;
 }
 
-/* ---------- رندر کارت ---------- */
 function renderCard(data, locName) {
   const c = data.current;
   const info = getWeatherInfo(c.weather_code, c.is_day === 1);
@@ -205,7 +240,7 @@ function renderCard(data, locName) {
 
   const root = document.getElementById('weatherModule');
   if (!root) return;
-  
+
   root.innerHTML = `
     <div class="weather-top">
       <div class="weather-temp-block"><div class="weather-temp">${temp}<sup>°</sup></div></div>
@@ -234,50 +269,6 @@ function renderCard(data, locName) {
   });
 }
 
-/* ---------- رندر شهرها ---------- */
-function renderCitiesBar() {
-  const bar = document.getElementById('forecastCitiesBar');
-  if (!bar) return;
-
-  const list = cities.length ? cities : (mainLoc ? [mainLoc] : []);
-
-  bar.innerHTML = list.map(c => `
-    <button class="forecast-city-pill ${forecastLoc && forecastLoc.id === c.id ? 'active' : ''}" data-city-id="${c.id}">
-      <span>${c.name}</span>
-      ${list.length > 1 ? `<span class="city-del" data-del="${c.id}">×</span>` : ''}
-    </button>
-  `).join('') + `<button class="forecast-city-pill add-city" id="forecastAddCity">+ افزودن</button>`;
-
-  bar.querySelectorAll('[data-city-id]').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      if (e.target.dataset.del) return;
-      forecastLoc = list.find(c => c.id === btn.dataset.cityId) || forecastLoc;
-      renderCitiesBar();
-      loadForecast();
-    });
-  });
-
-  bar.querySelectorAll('[data-del]').forEach(x => {
-    x.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const id = x.dataset.del;
-      cities = cities.filter(c => c.id !== id);
-      if (forecastLoc && forecastLoc.id === id) forecastLoc = cities[0] || mainLoc;
-      persist();
-      renderCitiesBar();
-      if (forecastLoc) loadForecast();
-    });
-  });
-
-  document.getElementById('forecastAddCity')?.addEventListener('click', (e) => {
-    e.stopPropagation();
-    modalMode = 'add';
-    openLocationModal();
-  });
-}
-
-/* ---------- رندر پیش‌بینی ---------- */
 function renderForecast(data) {
   const row = document.getElementById('forecastDaysRow');
   if (!row) return;
@@ -298,7 +289,104 @@ function renderForecast(data) {
   }).join('');
 }
 
-/* ---------- بارگذاری ---------- */
+/* ---------- انتخابگر شهر ---------- */
+function renderCitySelector() {
+  const current = document.getElementById('forecastCurrentCity');
+  if (current) current.textContent = forecastLoc ? forecastLoc.name : 'انتخاب شهر';
+}
+
+function renderCityList(filter) {
+  const list = document.getElementById('fcdList');
+  if (!list) return;
+
+  const q = (filter || '').trim().toLowerCase();
+  const savedNames = cities.map(c => c.name);
+  let items = [];
+
+  cities.forEach(c => {
+    if (!q || c.name.toLowerCase().includes(q)) {
+      items.push({ type: 'saved', id: c.id, name: c.name, lat: c.lat, lon: c.lon });
+    }
+  });
+
+  POPULAR_CITIES.forEach(p => {
+    if (savedNames.includes(p.name)) return;
+    if (!q || p.name.toLowerCase().includes(q)) {
+      items.push({ type: 'popular', name: p.name, lat: p.lat, lon: p.lon });
+    }
+  });
+
+  if (!items.length) {
+    list.innerHTML = `<div class="fcd-empty">شهری یافت نشد</div>`;
+    return;
+  }
+
+  list.innerHTML = items.map(it => `
+    <div class="fcd-item ${forecastLoc && forecastLoc.name === it.name ? 'active' : ''}" data-name="${it.name}" data-lat="${it.lat}" data-lon="${it.lon}" data-type="${it.type}" ${it.id ? `data-id="${it.id}"` : ''}>
+      <svg class="fcd-pin" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+      <span class="fcd-name">${it.name}</span>
+      ${it.type === 'saved' && cities.length > 1 ? `<button type="button" class="fcd-del" data-del-name="${it.name}">×</button>` : ''}
+    </div>
+  `).join('');
+
+  list.querySelectorAll('.fcd-item').forEach(el => {
+    el.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (e.target.classList.contains('fcd-del')) return;
+      selectCity({
+        name: el.dataset.name,
+        lat: parseFloat(el.dataset.lat),
+        lon: parseFloat(el.dataset.lon),
+      });
+    });
+  });
+
+  list.querySelectorAll('.fcd-del').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const name = btn.dataset.delName;
+      cities = cities.filter(c => c.name !== name);
+      persist();
+      if (forecastLoc && forecastLoc.name === name) {
+        forecastLoc = cities[0] || mainLoc;
+      }
+      renderCitySelector();
+      renderCityList(document.getElementById('fcdSearchInput')?.value);
+      loadForecast();
+    });
+  });
+}
+
+function selectCity(loc) {
+  const id = addCity(loc);
+  forecastLoc = { id, name: loc.name, lat: loc.lat, lon: loc.lon };
+  persist();
+  renderCitySelector();
+  closeCityDropdown();
+  loadForecast();
+}
+
+function openCityDropdown() {
+  const dd = document.getElementById('forecastCityDropdown');
+  if (!dd) return;
+  dd.classList.remove('hidden');
+  const input = document.getElementById('fcdSearchInput');
+  if (input) input.value = '';
+  renderCityList('');
+  setTimeout(() => input?.focus(), 50);
+}
+
+function closeCityDropdown() {
+  document.getElementById('forecastCityDropdown')?.classList.add('hidden');
+}
+
+function toggleCityDropdown() {
+  const dd = document.getElementById('forecastCityDropdown');
+  if (!dd) return;
+  if (dd.classList.contains('hidden')) openCityDropdown();
+  else closeCityDropdown();
+}
+
 async function loadMain() {
   const root = document.getElementById('weatherModule');
   let showedCache = false;
@@ -341,20 +429,19 @@ async function loadForecast() {
   }
 }
 
-/* ---------- تاگل ---------- */
 function toggleForecast() {
   const panel = document.getElementById('weatherForecastPanel');
   if (!panel) return;
   const willOpen = panel.classList.contains('hidden');
   ['weatherForecastPanel', 'prayerPanel', 'timerPanel'].forEach(id => document.getElementById(id)?.classList.add('hidden'));
+  closeCityDropdown();
   if (willOpen) {
     panel.classList.remove('hidden');
-    renderCitiesBar();
+    renderCitySelector();
     loadForecast();
   }
 }
 
-/* ---------- پاپ‌آپ ---------- */
 function openLocationModal() { document.getElementById('weatherModalOverlay')?.classList.remove('hidden'); }
 function closeLocationModal() { document.getElementById('weatherModalOverlay')?.classList.add('hidden'); }
 
@@ -373,7 +460,7 @@ async function applyLocation(loc) {
     persist();
     closeLocationModal();
     document.getElementById('weatherForecastPanel')?.classList.remove('hidden');
-    renderCitiesBar();
+    renderCitySelector();
     loadForecast();
   }
 }
@@ -420,7 +507,6 @@ function bindModalEvents() {
   });
 }
 
-/* ---------- INIT ---------- */
 export async function initWeather() {
   restore();
   bindModalEvents();
@@ -431,6 +517,33 @@ export async function initWeather() {
     persist();
   }
   forecastLoc = mainLoc;
+
+  document.getElementById('forecastCitySelector')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    toggleCityDropdown();
+  });
+
+  document.getElementById('fcdSearchInput')?.addEventListener('input', (e) => {
+    renderCityList(e.target.value);
+  });
+
+  document.getElementById('fcdSearchInput')?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const q = e.target.value.trim();
+      if (!q) return;
+      searchCity(q).then(loc => selectCity(loc)).catch(() => {});
+    }
+  });
+
+  document.addEventListener('click', (e) => {
+    const dd = document.getElementById('forecastCityDropdown');
+    if (!dd || dd.classList.contains('hidden')) return;
+    if (dd.contains(e.target)) return;
+    if (e.target.closest('#forecastCitySelector')) return;
+    closeCityDropdown();
+  });
+
   await loadMain();
 }
 
