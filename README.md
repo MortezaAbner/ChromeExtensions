@@ -2,7 +2,7 @@
 
 <img src="icon.png" alt="Abner" width="120" height="120" />
 
-# 🖐️ آبنر | Abner
+# 🖐️ افزونه آبنر | Abner Extension
 
 ### صفحه تب جدید مدرن فارسی — همه‌ی ابزارهای روزمره در یک نگاه
 
@@ -238,9 +238,10 @@ ChromeExtensions/
 
 ### ⭐ اگه آبنر رو دوست داری، بهش ستاره بده!
 
-ساخته‌شده با ❤️ توسط [Morteza Rafatpour](https://github.com/MortezaAbner)
+ساخته‌شده با ❤️ توسط [Morteza Abner](https://github.com/MortezaAbner)
 
 [![GitHub followers](https://img.shields.io/github/followers/MortezaAbner?style=social)](https://github.com/MortezaAbner)
 [![GitHub stars](https://img.shields.io/github/stars/MortezaAbner/ChromeExtensions?style=social)](https://github.com/MortezaAbner/ChromeExtensions)
 
 </div>
+docs: add comprehensive README
