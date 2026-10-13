@@ -615,6 +615,43 @@ function getActiveValue(colId) {
   return el ? +el.dataset.val : null;
 }
 
+/* ---------- تبدیل روز به سال/ماه/روز ---------- */
+function humanReadableDiff(jdn, todayJdn) {
+  const fromDate = d2g(jdn);
+  const toDate = d2g(todayJdn);
+
+  const isPast = jdn < todayJdn;
+  const earlier = isPast
+    ? new Date(fromDate.gy, fromDate.gm - 1, fromDate.gd)
+    : new Date(toDate.gy, toDate.gm - 1, toDate.gd);
+  const later = isPast
+    ? new Date(toDate.gy, toDate.gm - 1, toDate.gd)
+    : new Date(fromDate.gy, fromDate.gm - 1, fromDate.gd);
+
+  let years = later.getFullYear() - earlier.getFullYear();
+  let months = later.getMonth() - earlier.getMonth();
+  let days = later.getDate() - earlier.getDate();
+
+  if (days < 0) {
+    months--;
+    const daysInPrevMonth = new Date(later.getFullYear(), later.getMonth(), 0).getDate();
+    days += daysInPrevMonth;
+  }
+  if (months < 0) {
+    years--;
+    months += 12;
+  }
+
+  const parts = [];
+  if (years > 0) parts.push(`${toFa(years)} سال`);
+  if (months > 0) parts.push(`${toFa(months)} ماه`);
+  if (days > 0) parts.push(`${toFa(days)} روز`);
+
+  if (parts.length === 0) return 'امروز';
+
+  return parts.join(' و ');
+}
+
 function performConversion() {
   const y = getActiveValue('convYearCol');
   const m = getActiveValue('convMonthCol');
@@ -644,6 +681,15 @@ function performConversion() {
   const todayJdn = g2d(now.getFullYear(), now.getMonth() + 1, now.getDate());
   const diff = jdn - todayJdn;
 
+  // ----- محاسبه‌ی فاصله‌ی خوانا -----
+  let diffText;
+  if (diff === 0) {
+    diffText = 'امروز';
+  } else {
+    const humanized = humanReadableDiff(jdn, todayJdn);
+    diffText = humanized + (diff < 0 ? ' پیش' : ' بعد');
+  }
+
   const body = document.getElementById('convResultBody');
   if (!body) return;
 
@@ -665,8 +711,8 @@ function performConversion() {
     <div class="conv-weekday">${weekday}</div>
     <div class="conv-divider"></div>
     <div class="conv-diff">
-      <span>فاصله زمانی (سن)</span>
-      <span>${toFa(Math.abs(diff))} روز${diff < 0 ? ' پیش' : diff > 0 ? ' بعد' : ''}</span>
+      <span>فاصله زمانی</span>
+      <span>${diffText}</span>
     </div>
   `;
 
