@@ -6,9 +6,11 @@
 
 ### صفحه تب جدید مدرن فارسی — همه‌ی ابزارهای روزمره در یک نگاه
 
+🇮🇷 **فارسی** | 🇺🇸 [English](./README.en.md)
+
 [![Chrome Web Store](https://img.shields.io/badge/Chrome-Extension-4285F4?style=for-the-badge&logo=googlechrome&logoColor=white)](https://github.com/MortezaAbner/ChromeExtensions)
-[![Version](https://img.shields.io/badge/version-1.7.0-2563eb?style=for-the-badge)](https://github.com/MortezaAbner/ChromeExtensions/releases)
-[![License](https://img.shields.io/badge/license-MIT-22c55e?style=for-the-badge)](LICENSE)
+[![Version](https://img.shields.io/badge/version-1.8.0-2563eb?style=for-the-badge)](https://github.com/MortezaAbner/ChromeExtensions/releases)
+[![License](https://img.shields.io/badge/License-PolyForm%20Noncommercial-orange?style=for-the-badge)](LICENSE)
 [![PWA](https://img.shields.io/badge/PWA-Ready-5A0FC8?style=for-the-badge&logo=pwa&logoColor=white)](https://MortezaAbner.github.io/ChromeExtensions)
 
 [![Made with ❤️ in Iran](https://img.shields.io/badge/Made%20with%20%E2%9D%A4%EF%B8%8F%20in-Iran-22c55e?style=flat-square)](https://github.com/MortezaAbner)
@@ -230,7 +232,41 @@ ChromeExtensions/
 
 ## 📜 لایسنس
 
-این پروژه تحت لایسنس **MIT** منتشر شده. آزادانه استفاده کن.
+<div align="center">
+
+[![License: PolyForm Noncommercial](https://img.shields.io/badge/License-PolyForm%20Noncommercial-orange?style=for-the-badge)](LICENSE)
+
+</div>
+
+این پروژه تحت لایسنس **PolyForm Noncommercial 1.0.0** منتشر شده است.
+
+### 🇮🇷 به زبان ساده
+
+| استفاده | مجاز؟ |
+|---|:---:|
+| 🏠 استفاده شخصی | ✅ |
+| 🎓 استفاده آموزشی | ✅ |
+| 🔬 تحقیق و پژوهش | ✅ |
+| 🎨 پروژه‌های سرگرمی | ✅ |
+| 🏢 سازمان‌های غیرتجاری | ✅ |
+| ✏️ تغییر کد | ✅ |
+| 📤 انتشار مجدد (با ذکر منبع) | ✅ |
+| 💰 **فروش کد** | ❌ |
+| 💼 **استفاده در محصول تجاری** | ❌ |
+
+### 🇺🇸 Summary (English)
+
+This project is licensed under the **PolyForm Noncommercial License 1.0.0**.
+
+- ✅ Free for personal, educational, research, and non-commercial use
+- ✅ You may modify and redistribute with attribution
+- ❌ **Commercial use and selling are strictly prohibited**
+
+> ⚠️ **توجه:** این یک لایسنس Open Source استاندارد (OSI) نیست. استفاده تجاری نیاز به مجوز جداگانه از توسعه‌دهنده دارد.
+
+### 📧 برای استفاده‌ی تجاری
+
+اگه می‌خوای از این پروژه در محصول تجاری استفاده کنی، لطفاً از طریق [GitHub](https://github.com/MortezaAbner) تماس بگیر.
 
 ---
 
@@ -244,4 +280,3 @@ ChromeExtensions/
 [![GitHub stars](https://img.shields.io/github/stars/MortezaAbner/ChromeExtensions?style=social)](https://github.com/MortezaAbner/ChromeExtensions)
 
 </div>
-
