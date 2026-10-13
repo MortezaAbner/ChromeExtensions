@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title> Abner Extension </title>
+  <link rel="icon" type="image/png" href="icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="modules/bookmarks/bookmarks.css">
+  <link rel="stylesheet" href="modules/weather/weather.css">
+  <link rel="stylesheet" href="modules/prayer/prayer.css">
+  <link rel="stylesheet" href="modules/timer/timer.css">
+  <link rel="stylesheet" href="modules/search/search.css">
+  <link rel="stylesheet" href="modules/dock/dock.css">
+  <link rel="stylesheet" href="modules/calendar/calendar.css">
+  <link rel="stylesheet" href="modules/auth/auth.css">
+
+  <link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#2563eb">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="آبنر">
+<link rel="apple-touch-icon" href="icon-192.png">
+</head>
+<body>
+  <div class="wallpaper-background"></div>
+
+  <main class="dashboard-viewport">
+
+    <!-- ستون راست: تسک -->
+    <aside class="glass-panel task-module">
+      <div class="task-tabs">
+        <button class="tab-btn active" id="btnTabTasks">تسک</button>
+        <button class="tab-btn" id="btnTabNotes">یادداشت</button>
+      </div>
+      <div class="task-action-bar">
+        <button title="بیشتر" class="min-icon-btn"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/><circle cx="5" cy="12" r="1.5"/></svg></button>
+        <button title="مخفی" class="min-icon-btn"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+        <button title="فیلتر" class="min-icon-btn"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg></button>
+        <button title="افزودن" class="min-icon-btn"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+      </div>
+      <div class="task-scroll-area" id="tasksList">
+        <div class="task-row glass-panel"><input type="checkbox" id="chk1"><label for="chk1">بلی</label></div>
+        <div class="task-row glass-panel"><input type="checkbox" id="chk2"><label for="chk2">ل</label></div>
+      </div>
+      <div class="task-bottom-input">
+        <input type="text" id="newTaskInput" class="glass-panel" placeholder="نوشتن تسک جدید...">
+      </div>
+    </aside>
+
+    <!-- ستون وسط: سرچ + بوکمارک -->
+    <section class="center-module">
+      <div class="ab-search-wrap" id="abSearchWrap">
+        <div class="glass-panel ab-search-bar" id="abSearchBar">
+          <button type="button" class="ab-engine-btn" id="abEngineBtn">
+            <span class="ab-engine-logo" id="abEngineLogo"></span>
+            <span class="ab-engine-text" id="abEngineText">جستجو در گوگل</span>
+            <svg class="ab-engine-chevron" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 15 12 9 18 15"/><polyline points="6 9 12 3 18 9"/></svg>
+          </button>
+          <input type="text" id="searchInput" class="ab-search-input" placeholder="جستجو در وب..." autocomplete="off">
+          <div class="ab-search-tools">
+            <button type="button" class="ab-tool-btn" id="abToolVoice" title="جستجوی صوتی">
+              <svg viewBox="0 0 24 24" width="20" height="20">
+                <path fill="#4285F4" d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3z"/>
+                <path fill="#EA4335" d="M17 11a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11h-2z"/>
+              </svg>
+            </button>
+            <button type="button" class="ab-tool-btn" id="abToolLens" title="جستجوی تصویری">
+              <svg viewBox="0 0 24 24" width="20" height="20">
+                <path fill="#4285F4" d="M3 4v6h2V6h4V4H3z"/>
+                <path fill="#EA4335" d="M21 4h-6v2h4v4h2V4z"/>
+                <path fill="#FBBC05" d="M21 20v-6h-2v4h-4v2h6z"/>
+                <path fill="#34A853" d="M3 20h6v-2H5v-4H3v6z"/>
+                <circle cx="12" cy="12" r="3.2" fill="none" stroke="#4285F4" stroke-width="1.5"/>
+                <circle cx="12" cy="12" r="1.2" fill="#4285F4"/>
+              </svg>
+            </button>
+            <button type="button" class="ab-tool-btn ab-tool-submit" id="abSearchSubmit" title="جستجو">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="20" y1="20" x2="16.5" y2="16.5"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="ab-engine-dropdown hidden" id="abEngineDropdown"></div>
+      </div>
+      <div id="abnerBookmarksContainer"></div>
+    </section>
+
+    <!-- ستون چپ: ساعت، آب‌وهوا، تقویم -->
+        <aside class="left-module">
+
+      <div class="widgets-top-row">
+        <div class="glass-panel clock-widget">
+          <div class="clock-head">
+            <span class="clock-day" id="clockDay">چهارشنبه</span>
+            <span class="clock-time" id="clockTime">۰۰:۵۴</span>
+          </div>
+          <div class="clock-dates">
+            <div class="date-row"><span class="date-month" id="monthJalali">مهر</span><span class="date-num" id="dateJalali">۱۴۰۵/۰۷/۱۵</span></div>
+            <div class="date-row"><span class="date-month" id="monthMiladi">اکتبر</span><span class="date-num" id="dateMiladi">۲۰۲۶/۱۰/۰۷</span></div>
+            <div class="date-row"><span class="date-month" id="monthQamari">ربیع‌الثانی</span><span class="date-num" id="dateQamari">۱۴۴۸/۰۴/۱۹</span></div>
+          </div>
+          <div class="widget-actions">
+            <button id="btnPrayer">اوقات شرعی ▾</button>
+            <button id="btnTimer">تایمر ▾</button>
+          </div>
+        </div>
+
+        <div class="glass-panel weather-module" id="weatherModule">
+          <div class="weather-loading">در حال دریافت...</div>
+        </div>
+      </div>
+
+      <div class="weather-forecast-panel hidden" id="weatherForecastPanel">
+        <div class="forecast-city-selector" id="forecastCitySelector">
+          <span class="forecast-city-current">
+            <span class="pin-dot-mini"></span>
+            <span id="forecastCurrentCity">تهران</span>
+          </span>
+          <svg class="chevron" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="forecast-days-row" id="forecastDaysRow"></div>
+      </div>
+
+      <div class="forecast-city-dropdown hidden" id="forecastCityDropdown">
+        <div class="fcd-search">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="20" y1="20" x2="16.5" y2="16.5"/></svg>
+          <input type="text" id="fcdSearchInput" placeholder="جستجو شهر یا کشور..." autocomplete="off">
+        </div>
+        <div class="fcd-list" id="fcdList"></div>
+      </div>
+
+      <div class="abner-slide-panel hidden" id="prayerPanel">
+        <div class="prayer-sky" id="prayerSky">
+          <svg viewBox="0 0 400 130" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="skyGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#1e293b" stop-opacity="0.05"/><stop offset="100%" stop-color="#0f172a" stop-opacity="0.35"/></linearGradient>
+              <linearGradient id="pathGrad" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#f87171"/><stop offset="50%" stop-color="#fbbf24"/><stop offset="100%" stop-color="#60a5fa"/></linearGradient>
+            </defs>
+            <rect x="0" y="0" width="400" height="130" fill="url(#skyGrad)"/>
+            <path d="M0,115 Q200,-20 400,115" stroke="url(#pathGrad)" fill="none" stroke-width="2" stroke-dasharray="4,4"/>
+            <circle id="prayerSun" cx="0" cy="0" r="9" fill="#FDB813" opacity="0"/>
+            <circle id="prayerMoon" cx="0" cy="0" r="7" fill="#e2e8f0" opacity="0"/>
+            <line x1="0" y1="115" x2="400" y2="115" stroke="#334155" stroke-width="1" opacity="0.5"/>
+          </svg>
+          <div class="prayer-sky-label" id="prayerSkyLabel">—</div>
+        </div>
+        <div class="prayer-times-grid" id="prayerTimesGrid"></div>
+      </div>
+
+      <div class="abner-slide-panel hidden" id="timerPanel">
+        <div class="timer-main">
+          <div class="timer-col" data-unit="s">
+            <button class="timer-arrow up" data-dir="up" data-unit="s"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 15 12 9 18 15"/></svg></button>
+            <input type="text" class="timer-num" id="timerS" value="۰۰" maxlength="2" inputmode="numeric">
+            <button class="timer-arrow down" data-dir="down" data-unit="s"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></button>
+            <span class="timer-label">ثانیه</span>
+          </div>
+          <div class="timer-col" data-unit="m">
+            <button class="timer-arrow up" data-dir="up" data-unit="m"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 15 12 9 18 15"/></svg></button>
+            <input type="text" class="timer-num" id="timerM" value="۰۰" maxlength="2" inputmode="numeric">
+            <button class="timer-arrow down" data-dir="down" data-unit="m"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></button>
+            <span class="timer-label">دقیقه</span>
+          </div>
+          <div class="timer-col" data-unit="h">
+            <button class="timer-arrow up" data-dir="up" data-unit="h"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 15 12 9 18 15"/></svg></button>
+            <input type="text" class="timer-num" id="timerH" value="۰۰" maxlength="2" inputmode="numeric">
+            <button class="timer-arrow down" data-dir="down" data-unit="h"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></button>
+            <span class="timer-label">ساعت</span>
+          </div>
+        </div>
+        <div class="timer-actions">
+          <button class="timer-btn-start" id="timerStart">شروع</button>
+          <button class="timer-btn-pause hidden" id="timerPause">مکث</button>
+        </div>
+      </div>
+
+      <!-- تقویم + مبدل تاریخ -->
+      <div class="glass-panel calendar-module" id="abCalendar">
+
+        <!-- نمای اصلی تقویم -->
+        <div class="cal-main-view" id="calMainView">
+
+          <div class="cal-header">
+            <button class="cal-arrow" id="calPrev" title="ماه قبل">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+            </button>
+            <button class="cal-title-btn" id="calTitle">
+              <span id="calTitleText">مهر ۱۴۰۵</span>
+              <svg class="cal-title-chev" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <button class="cal-arrow" id="calNext" title="ماه بعد">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+          </div>
+
+          <div class="cal-subtitle">
+            <div class="cal-sub-row" id="calSubMiladi">Oct — Nov 2026</div>
+            <div class="cal-sub-row" id="calSubShamsi">ربیع‌الثانی — جمادی‌الاول ۱۴۴۸</div>
+          </div>
+
+          <div class="cal-weekdays">
+            <span>شنبه</span><span>یکشنبه</span><span>دوشنبه</span><span>سه‌شنبه</span>
+            <span>چهارشنبه</span><span>پنجشنبه</span><span>جمعه</span>
+          </div>
+
+          <div class="cal-grid-days" id="calGridDays"></div>
+
+          <div class="cal-bottom-bar">
+            <button class="flex-btn" id="calConvertBtn">
+              <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+              تبدیل تاریخ
+            </button>
+            <button class="flex-btn" id="calGoogleBtn">
+              <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              تقویم گوگل
+            </button>
+          </div>
+
+        </div>
+
+        <!-- نمای مبدل تاریخ -->
+        <div class="cal-converter hidden" id="calConverter">
+
+          <div class="conv-header">
+            <span class="conv-title">تبدیل تاریخ</span>
+            <button class="conv-close" id="convClose" title="بستن">×</button>
+          </div>
+
+          <div class="conv-source-row">
+            <span class="conv-source-label">تاریخ مبدأ:</span>
+            <div class="conv-tabs">
+              <button class="conv-tab" data-src="jalali">شمسی</button>
+              <button class="conv-tab" data-src="hijri">قمری</button>
+              <button class="conv-tab" data-src="gregorian">میلادی</button>
+            </div>
+          </div>
+
+          <div class="conv-picker">
+            <div class="conv-col" id="convYearCol"></div>
+            <div class="conv-col" id="convMonthCol"></div>
+            <div class="conv-col" id="convDayCol"></div>
+          </div>
+
+          <button class="conv-submit" id="convSubmit">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+            تبدیل کردن
+          </button>
+
+        </div>
+
+      </div>
+
+      <!-- پاپ‌آپ‌های تقویم -->
+      <div class="cal-picker hidden" id="calPicker">
+        <div class="cal-picker-cols">
+          <div class="cal-picker-col" id="calYearCol"></div>
+          <div class="cal-picker-col" id="calMonthCol"></div>
+        </div>
+        <button class="cal-picker-confirm" id="calPickerConfirm">نمایش مهر ۱۴۰۵</button>
+        <button class="cal-picker-today" id="calPickerToday">برو به امروز</button>
+      </div>
+
+      <div class="cal-events-popup hidden" id="calEventsPopup">
+        <button class="cal-events-close" id="calEventsClose" title="بستن">×</button>
+        <div class="cal-events-date" id="calEventsDate"></div>
+        <div class="cal-events-list" id="calEventsList"></div>
+      </div>
+
+      <!-- پاپ‌آپ نتیجه تبدیل تاریخ -->
+      <div class="conv-result hidden" id="convResult">
+        <div class="conv-result-header">
+          <span>تبدیل تاریخ</span>
+          <button class="conv-result-close" id="convResultClose" title="بستن">×</button>
+        </div>
+        <div class="conv-result-body" id="convResultBody"></div>
+        <button class="conv-result-new" id="convResultNew">
+          <span class="conv-new-key">N</span>
+          تبدیل جدید
+        </button>
+      </div>
+
+    </aside>
+
+  </main>
+
+  <!-- داکر پایین -->
+  <nav class="ab-bottom-dock" aria-label="تنظیمات سریع">
+    <button type="button" class="ab-dock-btn" id="dock-btn-login" title="ورود">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="8" r="4"/>
+        <path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1"/>
+      </svg>
+    </button>
+    <span class="ab-dock-divider"></span>
+    <button type="button" class="ab-dock-btn" id="dock-btn-settings" title="تنظیمات ماتی">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+      </svg>
+    </button>
+    <button type="button" class="ab-dock-btn" id="dock-btn-theme" title="تغییر حالت نمایش">
+      <span class="ab-theme-icon" id="abThemeIcon">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+      </span>
+    </button>
+    <button type="button" class="ab-dock-btn" id="dock-btn-tasks" title="تسک‌ها">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+        <polyline points="8 12 11 15 16 10"/>
+      </svg>
+    </button>
+    <button type="button" class="ab-dock-btn" id="dock-btn-home" title="خانه">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+        <polyline points="9 22 9 12 15 12 15 22"/>
+      </svg>
+    </button>
+    <span class="ab-dock-divider"></span>
+    <button type="button" class="ab-dock-btn ab-dock-btn-square" id="dock-btn-font" title="تنظیمات قلم">
+      <span class="ab-dock-letter">A</span>
+    </button>
+  </nav>
+
+  <!-- پاپ‌آپ تنظیم موقعیت آب‌وهوا -->
+  <div class="weather-modal-overlay hidden" id="weatherModalOverlay">
+    <div class="weather-modal">
+      <h3>📍 تنظیم موقعیت آب‌وهوا</h3>
+      <p class="modal-sub">روش دریافت وضعیت آب‌وهوای خود را انتخاب کنید:</p>
+      <div class="weather-option" id="wOptGPS">
+        <div class="weather-option-text">
+          <div class="weather-option-title">موقعیت‌یابی زنده دستگاه (GPS)</div>
+          <div class="weather-option-desc">دریافت مختصات آنلاین با سوییچ هوشمند خودکار</div>
+        </div>
+        <div class="weather-option-icon">🎯</div>
+      </div>
+      <div class="weather-option" id="wOptIP">
+        <div class="weather-option-text">
+          <div class="weather-option-title">تشخیص موقعیت مکانی با آی‌پی</div>
+          <div class="weather-option-desc">سریع، بدون نیاز به مجوز سیستم</div>
+        </div>
+        <div class="weather-option-icon">🌐</div>
+      </div>
+      <div class="weather-divider">یا جستجوی دستی شهر</div>
+      <input type="text" id="wCityInput" class="weather-search-input" placeholder="نام شهر را تایپ کنید (مثال: تهران، مشهد، شیراز)">
+      <div class="weather-modal-actions">
+        <button class="weather-modal-btn confirm" id="wConfirmBtn">تأیید و ذخیره</button>
+        <button class="weather-modal-btn cancel" id="wCancelBtn">انصراف</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- پاپ‌آپ تنظیمات ماتی -->
+  <div class="glass-settings-popup hidden" id="glassSettingsPopup">
+    <span>ماتی شیشه:</span>
+    <input type="range" id="glassBlurSlider" min="0" max="40" value="16">
+    <span id="glassBlurVal">16px</span>
+  </div>
+
+    <!-- پاپ‌آپ ورود با گوگل -->
+  <div id="abLoginOverlay" class="hidden">
+    <div class="ab-login-card">
+      <button class="ab-login-close" id="abLoginClose" title="بستن">×</button>
+
+      <div class="ab-login-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="8" r="4"/>
+          <path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1"/>
+        </svg>
+      </div>
+
+      <h3 class="ab-login-title">به افزونه آبنر خوش آمدید</h3>
+      <p class="ab-login-subtitle">
+        برای همگام‌سازی تسک‌ها، یادداشت‌ها و تنظیمات بین همه‌ی دستگاه‌هایتان، با حساب گوگل خود وارد شوید.
+      </p>
+
+      <button class="ab-google-btn" id="abGoogleSignInBtn">
+        <svg viewBox="0 0 48 48" width="20" height="20"><path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"/><path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 16.318 4 9.656 8.337 6.306 14.691z"/><path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238A11.91 11.91 0 0 1 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z"/><path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303a12.04 12.04 0 0 1-4.087 5.571l.003-.002 6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z"/></svg>
+        <span>ورود با گوگل</span>
+      </button>
+
+      <button class="ab-login-skip" id="abLoginSkip">فعلاً بدون حساب ادامه می‌دهم</button>
+
+      <div class="ab-login-features">
+        <div class="ab-login-feature">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+          <span>همگام‌سازی خودکار بین همه دستگاه‌ها</span>
+        </div>
+        <div class="ab-login-feature">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          <span>داده‌ها در حساب گوگل خودتان ذخیره می‌شود</span>
+        </div>
+        <div class="ab-login-feature">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          <span>بدون سرور واسطه — کاملاً امن</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="app.js"></script>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

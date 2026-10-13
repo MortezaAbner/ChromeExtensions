@@ -1,0 +1,111 @@
+/* ============ اوقات شرعی ============ */
+
+.abner-slide-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  padding: 12px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, var(--glass-opacity, 0.12)) !important;
+  backdrop-filter: blur(var(--dash-blur-px, 24px)) saturate(160%) !important;
+  -webkit-backdrop-filter: blur(var(--dash-blur-px, 24px)) saturate(160%) !important;
+  border: 1px solid var(--dash-glass-border, rgba(255, 255, 255, 0.25)) !important;
+  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.4);
+  z-index: 100;
+  direction: rtl;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  animation: wPanelIn 0.25s ease;
+}
+
+.abner-slide-panel.hidden { display: none; }
+
+@keyframes wPanelIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* نوار شهرها (مشترک) */
+.prayer-cities-bar,
+.forecast-cities-bar {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-bottom: 2px;
+}
+.prayer-cities-bar::-webkit-scrollbar,
+.forecast-cities-bar::-webkit-scrollbar { display: none; }
+
+/* آسمان */
+.prayer-sky {
+  position: relative;
+  width: 100%;
+  height: 130px;
+  border-radius: 14px;
+  overflow: hidden;
+  background: linear-gradient(180deg, rgba(30,41,59,0.15), rgba(15,23,42,0.35));
+}
+.prayer-sky svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.prayer-sky-label {
+  position: absolute;
+  bottom: 6px;
+  right: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.85);
+  text-shadow: 0 1px 4px rgba(0,0,0,0.6);
+}
+
+/* گرید اوقات */
+.prayer-times-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+.prayer-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 8px 4px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: all 0.2s;
+}
+.prayer-item:hover { background: rgba(255, 255, 255, 0.14); }
+.prayer-item.next {
+  background: rgba(59, 110, 245, 0.22);
+  border-color: rgba(59, 110, 245, 0.55);
+  box-shadow: 0 4px 14px rgba(59, 110, 245, 0.3);
+}
+.prayer-ico { font-size: 16px; }
+.prayer-lbl {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.8);
+  white-space: nowrap;
+}
+.prayer-time {
+  font-size: 14px;
+  font-weight: 900;
+  color: #fff;
+  letter-spacing: 0.5px;
+}
+
+@media (max-width: 1024px) {
+  .abner-slide-panel {
+    position: relative !important;
+    top: auto !important;
+    margin-top: 8px !important;
+    grid-column: 1 / -1 !important;
+  }
+  .prayer-times-grid { grid-template-columns: repeat(3, 1fr); }
+}
