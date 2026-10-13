@@ -244,4 +244,4 @@ ChromeExtensions/
 [![GitHub stars](https://img.shields.io/github/stars/MortezaAbner/ChromeExtensions?style=social)](https://github.com/MortezaAbner/ChromeExtensions)
 
 </div>
-docs: add comprehensive README
+
