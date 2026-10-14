@@ -9,8 +9,10 @@ import { initDock } from './modules/dock/dock.js';
 import { initCalendar, initConverter } from './modules/calendar/calendar.js';
 import { initAuth } from './modules/auth/auth.js';
 import { initSync } from './modules/sync/sync.js';
+import { initTasks } from './modules/tasks/tasks.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
+  // ---------- ماژول‌های اصلی ----------
   initGlass();
   initBookmarks();
   initWeather();
@@ -21,12 +23,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   initDock();
   initCalendar();
   initConverter();
+  initTasks();           // ✅ ماژول جدید تسک و یادداشت
 
-  // احراز هویت و sync بعد از بقیه
+  // ---------- احراز هویت و سینک ----------
   await initAuth();
   await initSync();
 
-  // بستن پنل‌ها با کلیک بیرون
+  // ---------- بستن پنل‌های کشویی با کلیک بیرون ----------
   document.addEventListener('click', (e) => {
     const panels = ['weatherForecastPanel', 'prayerPanel', 'timerPanel'];
     const triggers = {

@@ -1,9 +1,8 @@
-/* ============ همگام‌سازی با گوگل درایو - آبنر (v2) ============ */
+/* ============ همگام‌سازی با گوگل درایو - آبنر (v3) ============ */
 
 import { getToken, getUser, refreshToken } from '../auth/auth.js';
 
 const SYNC_FILE = 'abner_data.json';
-const CACHE_TTL = 10 * 60 * 1000;
 
 let syncStatus = 'idle';
 let syncTimer = null;
@@ -16,7 +15,7 @@ function setStatus(status) {
 }
 export function getSyncStatus() { return syncStatus; }
 
-/* ---------- API Drive ---------- */
+/* ---------- تشخیص حالت ---------- */
 const DRIVE_API = 'https://www.googleapis.com/drive/v3';
 const UPLOAD_API = 'https://www.googleapis.com/upload/drive/v3';
 
@@ -24,6 +23,7 @@ function isExtension() {
   return typeof chrome !== 'undefined' && chrome.identity;
 }
 
+/* ---------- درخواست با مدیریت 401 ---------- */
 async function driveRequest(url, options = {}, retried = false) {
   let token = await getToken();
   if (!token) throw new Error('کاربر لاگین نیست');
@@ -36,18 +36,15 @@ async function driveRequest(url, options = {}, retried = false) {
     }
   });
 
-  /* ---------- مدیریت 401 (توکن منقضی) ---------- */
   if (res.status === 401 && !retried) {
-    console.warn('🔑 توکن منقضی شده — تلاش برای تازه‌سازی...');
+     console.log('%c🔑 توکن منقضی شده — تلاش برای تازه‌سازی...', 'color: #38bdf8;');
 
-    // پاک کردن توکن قدیمی از کش کروم
     if (isExtension()) {
       try {
         await new Promise(r => chrome.identity.removeCachedAuthToken({ token }, r));
       } catch (_) {}
     }
 
-    // گرفتن توکن جدید
     try {
       const newToken = await refreshToken();
       if (newToken) {
@@ -58,11 +55,9 @@ async function driveRequest(url, options = {}, retried = false) {
       console.error('❌ خطا در تازه‌سازی توکن:', e);
     }
 
-    // اگه نتونستیم، خطا بده
     throw new Error('توکن منقضی شده — لطفاً دوباره وارد شوید');
   }
 
-  /* ---------- مدیریت خطاهای دیگه ---------- */
   if (!res.ok) {
     let errorMsg = `Drive API error: ${res.status}`;
     try {
@@ -119,26 +114,28 @@ async function downloadFile(id) {
   return res.json();
 }
 
+/* ---------- کلیدهای داده‌ای که سینک می‌شن ---------- */
+const SYNC_KEYS = [
+  'abner_tasks_v2',           // ✅ تسک و یادداشت
+  'abner_full_bookmarks_v3',  // بوکمارک‌ها
+  'abner_theme_mode',         // تم
+  'abner_glass_blur',         // ماتی شیشه
+  'abner_weather_main',       // شهر اصلی آب‌وهوا
+  'abner_weather_cities',     // لیست شهرها
+  'abner_timer_state',        // تایمر
+  'abner_search_engine',      // موتور جستجوی انتخابی
+  'abner_custom_avatar',      // عکس پروفایل سفارشی
+];
+
 /* ---------- جمع‌آوری داده‌های لوکال ---------- */
 async function collectLocalData() {
   const result = {};
-  const keys = [
-    'abner_full_bookmarks_v3',
-    'abner_theme_mode',
-    'abner_glass_blur',
-    'abner_weather_main',
-    'abner_weather_cities',
-    'abner_timer_state',
-    'abner_search_engine',
-    'abner_custom_avatar',
-    'abner_first_install_done'
-  ];
 
   try {
-    const r = await chrome.storage.local.get(keys);
+    const r = await chrome.storage.local.get(SYNC_KEYS);
     Object.assign(result, r);
   } catch (_) {
-    keys.forEach(k => {
+    SYNC_KEYS.forEach(k => {
       const v = localStorage.getItem(k);
       if (v !== null) result[k] = v;
     });
@@ -171,7 +168,7 @@ async function uploadAll() {
     if (!user) throw new Error('کاربر لاگین نیست');
 
     const payload = {
-      version: 2,
+      version: 3,
       user: user.email,
       updatedAt: Date.now(),
       data: local
@@ -184,9 +181,7 @@ async function uploadAll() {
     window.dispatchEvent(new CustomEvent('sync-complete', { detail: { direction: 'upload' } }));
   } catch (e) {
     console.error('❌ خطا در آپلود:', e.message);
-
-    // اگه خطای احراز هویت بود → کاربر رو مطلع کن
-    if (e.message.includes('توکن') || e.message.includes('401') || e.message.includes('invalid authentication')) {
+    if (e.message.includes('توکن') || e.message.includes('401')) {
       setStatus('auth-error');
     } else {
       setStatus('error');
@@ -219,7 +214,7 @@ async function downloadAll() {
     setStatus('synced');
   } catch (e) {
     console.error('❌ خطا در دانلود:', e.message);
-    if (e.message.includes('توکن') || e.message.includes('401') || e.message.includes('invalid authentication')) {
+    if (e.message.includes('توکن') || e.message.includes('401')) {
       setStatus('auth-error');
     } else {
       setStatus('error');
@@ -248,7 +243,7 @@ export async function initSync() {
   const user = getUser();
   if (!user) setStatus('idle');
 
-  // بعد از ورود → دانلود اولیه + sync
+  /* بعد از ورود کاربر → دانلود اولیه + sync */
   window.addEventListener('user-signed-in', async () => {
     setTimeout(async () => {
       await downloadAll();
@@ -256,25 +251,39 @@ export async function initSync() {
     }, 800);
   });
 
-  // هر تغییری → sync با تأخیر
+  /* هر تغییر توی storage → sync با تأخیر */
   try {
     chrome.storage.onChanged.addListener((changes, area) => {
       if (area !== 'local') return;
-      scheduleSync();
+      // فقط اگه کلید مهمی تغییر کرد
+      const important = Object.keys(changes).some(k => SYNC_KEYS.includes(k));
+      if (important) scheduleSync();
     });
-  } catch (_) {}
+  } catch (_) {
+    // PWA - از localStorage events استفاده کن
+    window.addEventListener('storage', (e) => {
+      if (SYNC_KEYS.includes(e.key)) scheduleSync();
+    });
+  }
 
-  // رویداد دستی
+  /* رویداد سفارشی برای سینک دستی */
   window.addEventListener('sync-now', () => syncNow());
 
-  // آنلاین/آفلاین
+  /* رویداد تسک تغییر کرد */
+  window.addEventListener('tasks-updated', () => scheduleSync(1500));
+
+  /* رویداد بوکمارک تغییر کرد */
+  window.addEventListener('bookmarks-updated', () => scheduleSync(1500));
+
+  /* آنلاین / آفلاین */
   window.addEventListener('online', () => setTimeout(syncNow, 500));
   window.addEventListener('offline', () => setStatus('offline'));
 
-  // هر ۵ دقیقه
+  /* هر ۵ دقیقه یه بار sync */
   setInterval(() => {
     if (navigator.onLine && getUser()) syncNow();
   }, 5 * 60 * 1000);
 
+  /* اولین sync بعد از ۳ ثانیه */
   if (user) setTimeout(syncNow, 3000);
 }

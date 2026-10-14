@@ -17,6 +17,7 @@
   <link rel="stylesheet" href="modules/dock/dock.css">
   <link rel="stylesheet" href="modules/calendar/calendar.css">
   <link rel="stylesheet" href="modules/auth/auth.css">
+  <link rel="stylesheet" href="modules/tasks/tasks.css">
 
   <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#2563eb">
@@ -30,25 +31,68 @@
 
   <main class="dashboard-viewport">
 
-    <!-- ستون راست: تسک -->
-    <aside class="glass-panel task-module">
+        <!-- ستون راست: تسک و یادداشت -->
+    <aside class="glass-panel task-module" id="abnerTaskModule">
+
       <div class="task-tabs">
-        <button class="tab-btn active" id="btnTabTasks">تسک</button>
-        <button class="tab-btn" id="btnTabNotes">یادداشت</button>
+        <button class="tab-btn active" data-tab="tasks" id="btnTabTasks">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><polyline points="8 12 11 15 16 10"/></svg>
+          تسک
+        </button>
+        <button class="tab-btn" data-tab="notes" id="btnTabNotes">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="13" y2="16"/></svg>
+          یادداشت
+        </button>
       </div>
+
       <div class="task-action-bar">
-        <button title="بیشتر" class="min-icon-btn"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/><circle cx="5" cy="12" r="1.5"/></svg></button>
-        <button title="مخفی" class="min-icon-btn"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
-        <button title="فیلتر" class="min-icon-btn"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg></button>
-        <button title="افزودن" class="min-icon-btn"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+        <button type="button" class="min-icon-btn" id="taskActionMore" title="بیشتر">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><circle cx="5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="19" cy="12" r="1.7"/></svg>
+        </button>
+        <button type="button" class="min-icon-btn" id="taskActionHide" title="مخفی">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+        </button>
+        <button type="button" class="min-icon-btn" id="taskActionFilter" title="فیلتر">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+        </button>
+        <button type="button" class="min-icon-btn" id="taskActionSort" title="مرتب‌سازی">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><polyline points="7 4 7 20"/><polyline points="3 16 7 20 11 16"/><polyline points="17 20 17 4"/><polyline points="21 8 17 4 13 8"/></svg>
+        </button>
       </div>
-      <div class="task-scroll-area" id="tasksList">
-        <div class="task-row glass-panel"><input type="checkbox" id="chk1"><label for="chk1">بلی</label></div>
-        <div class="task-row glass-panel"><input type="checkbox" id="chk2"><label for="chk2">ل</label></div>
+
+      <div class="task-scroll-area" id="tasksList"></div>
+
+      <!-- ورودی تسک / یادداشت جدید -->
+      <div class="task-new-input-wrap" id="taskNewInputWrap">
+        <div class="tn-inputs">
+          <input type="text" class="tn-title" id="tnTitle" placeholder="نوشتن تسک جدید..." autocomplete="off">
+          <input type="text" class="tn-desc" id="tnDesc" placeholder="توضیحات..." autocomplete="off">
+        </div>
+        <div class="tn-toolbar">
+          <button type="button" class="tn-icon" id="tnRecurring" title="تکرار">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+          </button>
+          <button type="button" class="tn-icon" id="tnPriority" title="اولویت">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+          </button>
+          <button type="button" class="tn-icon" id="tnDue" title="سررسید">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </button>
+          <button type="button" class="tn-icon" id="tnCalendar" title="تاریخ">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          </button>
+          <button type="button" class="tn-icon" id="tnTag" title="برچسب">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+          </button>
+          <button type="button" class="tn-submit" id="tnSubmit" title="افزودن">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+          </button>
+        </div>
+
+        <!-- پاپ‌آپ‌های داخلی ورودی (اولویت/سررسید/برچسب/تکرار/تاریخ) -->
+        <div class="tn-popover hidden" id="tnPopover"></div>
       </div>
-      <div class="task-bottom-input">
-        <input type="text" id="newTaskInput" class="glass-panel" placeholder="نوشتن تسک جدید...">
-      </div>
+
     </aside>
 
     <!-- ستون وسط: سرچ + بوکمارک -->

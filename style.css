@@ -59,11 +59,13 @@ body {
 .task-bottom-input input,
 .ab-bm-slot,
 .ab-folder-pill {
-  background: transparent !important;
-  backdrop-filter: blur(var(--dash-blur-px, 16px)) saturate(160%) !important;
-  -webkit-backdrop-filter: blur(var(--dash-blur-px, 16px)) saturate(160%) !important;
+  background: rgba(20, 40, 40, 0.18) !important;
+  backdrop-filter: blur(var(--dash-blur-px, 16px)) !important;
+  -webkit-backdrop-filter: blur(var(--dash-blur-px, 16px)) !important;
   border: 1px solid var(--dash-glass-border) !important;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.28) !important;
+  transform: translateZ(0);
+  isolation: isolate;
 }
 
 .clock-display, .day-display, .weather-temp, .weather-status, .weather-range,
@@ -77,11 +79,11 @@ body {
   position: relative;
   z-index: 10;
   width: 96vw;
-  max-width: 1450px;
+  max-width: 1440px;
   height: 640px;
   display: grid;
-  grid-template-columns: 400px 1fr 380px;
-  gap: 12px;
+  grid-template-columns: 340px 1fr 400px;
+  gap: 14px;
   align-items: stretch;
 }
 

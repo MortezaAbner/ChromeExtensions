@@ -1,459 +1,1151 @@
-/* ========================================================
-   ماژول شیشه‌ای تسک و یادداشت آبنر (Abner Tasks & Notes)
-======================================================== */
-.task-module {
+/* ============ تسک و یادداشت — آبنر v13 (نهایی) ============ */
+
+/* ============ متغیر رنگ شیشه برای هر تم ============ */
+body.theme-glass { --glass-rgba: 255, 255, 255; }
+body.theme-dark  { --glass-rgba: 15, 23, 42; }
+body.theme-light { --glass-rgba: 255, 252, 245; }
+
+/* ============================================================
+   کادر اصلی تسک
+============================================================ */
+#abnerTaskModule {
   display: flex !important;
   flex-direction: column !important;
   height: 100% !important;
   box-sizing: border-box !important;
   position: relative !important;
-  overflow: visible !important;
+  overflow: hidden !important;
+  padding: 16px !important;
+  border-radius: 24px !important;
+  gap: 10px !important;
+  isolation: isolate !important;
+}
+
+#abnerTaskModule input,
+#abnerTaskModule textarea {
+  appearance: none !important;
+  -webkit-appearance: none !important;
   background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  font-family: inherit !important;
+  color: #ffffff !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  padding: 4px 0 !important;
+  margin: 0 !important;
+  border-radius: 0 !important;
 }
+#abnerTaskModule input::placeholder { color: rgba(255, 255, 255, 0.5) !important; }
 
-/* تب‌های بالای پنل */
-.abner-task-tabs {
-  display: flex;
-  gap: 6px;
-  padding: 4px;
-  border-radius: 14px;
-  background: rgba(0, 0, 0, 0.25);
-  margin-bottom: 8px;
+/* ============================================================
+   تب‌ها
+============================================================ */
+#abnerTaskModule .task-tabs {
+  display: flex !important;
+  gap: 4px !important;
+  padding: 4px !important;
+  background: rgba(0, 0, 0, 0.2) !important;
+  border-radius: 14px !important;
+  flex-shrink: 0 !important;
 }
-
-.abner-tab-btn {
-  flex: 1;
-  padding: 6px 12px;
-  border: none;
-  background: transparent;
-  color: rgba(255, 255, 255, 0.65);
-  font-size: 13px;
-  font-weight: 700;
-  border-radius: 10px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  font-family: inherit;
-  text-align: center;
-}
-
-.abner-tab-btn.active {
-  background: var(--dash-accent-color, #2563eb);
-  color: #ffffff;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
-}
-
-/* نوار ابزار بالا */
-.abner-task-action-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding-bottom: 8px;
-  margin-bottom: 8px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.abner-action-group {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.abner-icon-btn {
-  background: var(--dash-glass-bg, rgba(255, 255, 255, 0.1)) !important;
-  border: 1px solid var(--dash-glass-border, rgba(255, 255, 255, 0.2)) !important;
-  backdrop-filter: blur(var(--dash-blur-px, 16px)) !important;
-  -webkit-backdrop-filter: blur(var(--dash-blur-px, 16px)) !important;
-  color: rgba(255, 255, 255, 0.85);
-  width: 28px;
-  height: 28px;
-  border-radius: 9px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.abner-icon-btn:hover, .abner-icon-btn.active {
-  background: var(--dash-accent-color, #2563eb) !important;
-  color: #fff;
-}
-
-/* اسکرول لیست آیتم‌ها */
-.task-scroll-area {
+#abnerTaskModule .tab-btn {
   flex: 1 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  border: none !important;
+  background: transparent !important;
+  color: rgba(255, 255, 255, 0.72) !important;
+  padding: 8px !important;
+  border-radius: 10px !important;
+  cursor: pointer !important;
+  font-family: inherit !important;
+  font-weight: 700 !important;
+  font-size: 13px !important;
+  transition: all 0.2s !important;
+}
+#abnerTaskModule .tab-btn:hover { color: #fff !important; }
+#abnerTaskModule .tab-btn.active {
+  background: #3b82f6 !important;
+  color: #fff !important;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.35) !important;
+}
+#abnerTaskModule .tab-btn svg { flex-shrink: 0 !important; }
+
+/* ============================================================
+   نوار اکشن
+============================================================ */
+#abnerTaskModule .task-action-bar {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  gap: 6px !important;
+  flex-shrink: 0 !important;
+  width: 100% !important;
+}
+#abnerTaskModule .task-action-bar .min-icon-btn {
+  flex: 1 1 0 !important;
+  height: 38px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: rgba(255, 255, 255, 0.06) !important;
+  border: 1px solid rgba(255, 255, 255, 0.16) !important;
+  border-radius: 11px !important;
+  color: rgba(255, 255, 255, 0.85) !important;
+  transition: all 0.2s !important;
+  padding: 0 !important;
+  cursor: pointer !important;
+  min-width: 0 !important;
+}
+#abnerTaskModule .task-action-bar .min-icon-btn:hover {
+  background: rgba(255, 255, 255, 0.15) !important;
+  color: #fff !important;
+}
+#abnerTaskModule .task-action-bar .min-icon-btn.active {
+  background: #3b82f6 !important;
+  color: #fff !important;
+  border-color: transparent !important;
+}
+#abnerTaskModule .task-action-bar .min-icon-btn svg {
+  width: 17px !important;
+  height: 17px !important;
+}
+
+/* ============================================================
+   لیست اسکرول تسک‌ها
+============================================================ */
+#abnerTaskModule .task-scroll-area {
+  flex: 1 1 auto !important;
   overflow-y: auto !important;
   display: flex !important;
   flex-direction: column !important;
   gap: 8px !important;
-  padding-bottom: 85px !important;
+  min-height: 0 !important;
+  padding: 2px !important;
+  transition: filter 0.3s ease !important;
+  scrollbar-width: thin !important;
+  scrollbar-color: rgba(255, 255, 255, 0.25) transparent !important;
+}
+#abnerTaskModule .task-scroll-area::-webkit-scrollbar { width: 5px; }
+#abnerTaskModule .task-scroll-area::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.22);
+  border-radius: 4px;
+}
+#abnerTaskModule .task-scroll-area.is-hidden {
+  filter: blur(9px) !important;
+  pointer-events: none !important;
+  user-select: none !important;
+}
+#abnerTaskModule:has(.task-scroll-area.is-hidden) .task-new-input-wrap {
+  filter: blur(9px) !important;
+  pointer-events: none !important;
 }
 
-/* کارت آیتم شیشه‌ای */
-.abner-card-item {
-  border-radius: 14px;
-  border: 1px solid var(--dash-glass-border, rgba(255, 255, 255, 0.15)) !important;
-  background: var(--dash-glass-bg, rgba(20, 24, 35, 0.4)) !important;
-  backdrop-filter: blur(var(--dash-blur-px, 16px)) !important;
-  -webkit-backdrop-filter: blur(var(--dash-blur-px, 16px)) !important;
-  padding: 10px 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  transition: all 0.2s ease;
-  color: #fff;
-}
-
-.abner-card-item.completed {
-  opacity: 0.55;
-}
-
-.abner-card-item.completed .item-title {
-  text-decoration: line-through;
-}
-
-.abner-item-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-}
-
-.abner-item-left {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex: 1;
-  min-width: 0;
-}
-
-.abner-checkbox {
-  width: 16px;
-  height: 16px;
-  accent-color: var(--dash-accent-color, #2563eb);
-  cursor: pointer;
-}
-
-.item-title {
-  font-size: 13px;
-  font-weight: 600;
-  color: #ffffff;
-  user-select: none;
-  cursor: pointer;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.abner-card-desc {
-  font-size: 11px;
-  color: rgba(255, 255, 255, 0.7);
-  line-height: 1.5;
-  margin: 0;
-  white-space: pre-wrap;
-  word-break: break-word;
-}
-
-/* بج‌های مشخصات آیتم */
-.abner-badge-list {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
-  padding-top: 2px;
-}
-
-.abner-meta-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 2px 7px;
-  border-radius: 8px;
-  font-size: 10.5px;
-  font-weight: 600;
-  background: rgba(255, 255, 255, 0.12);
-  color: #e2e8f0;
-}
-
-.prio-low { background: rgba(34, 197, 94, 0.2); color: #4ade80; }
-.prio-med { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
-.prio-high { background: rgba(239, 68, 68, 0.25); color: #f87171; }
-
-.note-pin-badge {
-  color: #facc15;
-  margin-inline-end: 4px;
-}
-
-/* دکمه‌های هاور */
-.abner-item-actions {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  opacity: 0;
-  transition: opacity 0.2s;
-}
-
-.abner-card-item:hover .abner-item-actions {
-  opacity: 1;
-}
-
-.abner-mini-action {
-  background: rgba(255, 255, 255, 0.1);
-  border: none;
-  color: rgba(255, 255, 255, 0.7);
-  cursor: pointer;
-  border-radius: 6px;
-  width: 22px;
-  height: 22px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
-}
-
-.abner-mini-action:hover {
-  background: var(--dash-accent-color, #2563eb);
-  color: #fff;
-}
-
-/* پنل ورودی فرم پایین */
-.abner-form-panel {
-  position: absolute !important;
-  bottom: 0 !important;
-  left: 0 !important;
-  right: 0 !important;
-  padding: 8px 12px !important;
-  border-radius: 16px !important;
-  background: var(--dash-glass-bg, rgba(20, 24, 35, 0.65)) !important;
-  backdrop-filter: blur(var(--dash-blur-px, 20px)) !important;
-  -webkit-backdrop-filter: blur(var(--dash-blur-px, 20px)) !important;
-  border: 1px solid var(--dash-glass-border, rgba(255, 255, 255, 0.2)) !important;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35) !important;
+/* ============================================================
+   حالت خالی
+============================================================ */
+#abnerTaskModule .task-empty-state {
   display: flex !important;
   flex-direction: column !important;
-  gap: 6px !important;
-  z-index: 20 !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  padding: 30px 12px !important;
+  text-align: center !important;
+  margin: auto !important;
+}
+#abnerTaskModule .tes-icon {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 72px !important;
+  height: 72px !important;
+  border-radius: 50% !important;
+  background: rgba(255, 255, 255, 0.06) !important;
+  margin-bottom: 4px !important;
+}
+#abnerTaskModule .tes-title {
+  font-size: 14.5px !important;
+  font-weight: 800 !important;
+  color: rgba(255, 255, 255, 0.95) !important;
+  margin-bottom: 6px !important;
+}
+#abnerTaskModule .tes-sub {
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  color: rgba(255, 255, 255, 0.6) !important;
+  margin-top: 4px !important;
+}
+#abnerTaskModule .tes-suggestions {
+  list-style: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 4px !important;
+}
+#abnerTaskModule .tes-suggestions li {
+  font-size: 12.5px !important;
+  font-weight: 600 !important;
+  color: rgba(255, 255, 255, 0.72) !important;
+  cursor: pointer !important;
+  padding: 3px 8px !important;
+  border-radius: 8px !important;
+  transition: all 0.15s !important;
+}
+#abnerTaskModule .tes-suggestions li:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #fff !important;
 }
 
-.abner-input-row {
+/* ============================================================
+   آیتم تسک
+============================================================ */
+#abnerTaskModule .task-item {
+  display: flex !important;
+  align-items: center !important;
+  padding: 10px 12px !important;
+  border-radius: 14px !important;
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  transition: all 0.2s !important;
+}
+#abnerTaskModule .task-item:hover {
+  background: rgba(255, 255, 255, 0.09) !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
+}
+#abnerTaskModule .ti-main {
+  display: flex !important;
+  align-items: flex-start !important;
+  gap: 10px !important;
+  width: 100% !important;
+  min-width: 0 !important;
+}
+#abnerTaskModule .ti-check {
+  flex-shrink: 0 !important;
+  width: 22px !important;
+  height: 22px !important;
+  border-radius: 7px !important;
+  border: 2px solid rgba(255, 255, 255, 0.35) !important;
+  background: transparent !important;
+  color: #fff !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin-top: 1px !important;
+  transition: all 0.2s !important;
+  padding: 0 !important;
+}
+#abnerTaskModule .ti-check:hover { border-color: #3b82f6 !important; }
+#abnerTaskModule .task-item.completed .ti-check {
+  background: #22c55e !important;
+  border-color: #22c55e !important;
+}
+#abnerTaskModule .task-item.completed .ti-title {
+  text-decoration: line-through !important;
+  opacity: 0.55 !important;
+}
+#abnerTaskModule .task-item.completed .ti-desc { opacity: 0.5 !important; }
+#abnerTaskModule .ti-content {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 3px !important;
+}
+#abnerTaskModule .ti-title {
+  font-size: 13.5px !important;
+  font-weight: 700 !important;
+  color: #fff !important;
+  word-break: break-word !important;
+  line-height: 1.4 !important;
+}
+#abnerTaskModule .ti-desc {
+  font-size: 11.5px !important;
+  font-weight: 500 !important;
+  color: rgba(255, 255, 255, 0.62) !important;
+  line-height: 1.5 !important;
+  word-break: break-word !important;
+  white-space: pre-wrap !important;
+}
+#abnerTaskModule .ti-badges {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 4px !important;
+  margin-top: 3px !important;
+}
+#abnerTaskModule .ti-badge {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 3px !important;
+  padding: 2px 7px !important;
+  border-radius: 7px !important;
+  font-size: 10.5px !important;
+  font-weight: 700 !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: rgba(255, 255, 255, 0.85) !important;
+  white-space: nowrap !important;
+}
+#abnerTaskModule .ti-badge.prio { background: rgba(239, 68, 68, 0.18) !important; }
+#abnerTaskModule .ti-badge.due { color: #93c5fd !important; background: rgba(59, 130, 246, 0.15) !important; }
+#abnerTaskModule .ti-badge.due.past { color: #fca5a5 !important; background: rgba(239, 68, 68, 0.15) !important; }
+#abnerTaskModule .ti-badge.tag { background: rgba(167, 139, 250, 0.2) !important; color: #c4b5fd !important; }
+#abnerTaskModule .ti-badge.recur { color: #a78bfa !important; background: rgba(167, 139, 250, 0.15) !important; }
+#abnerTaskModule .ti-action {
+  flex-shrink: 0 !important;
+  width: 26px !important;
+  height: 26px !important;
+  border-radius: 8px !important;
+  border: none !important;
+  background: transparent !important;
+  color: rgba(255, 255, 255, 0.45) !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: all 0.2s !important;
+  opacity: 0 !important;
+  padding: 0 !important;
+}
+#abnerTaskModule .task-item:hover .ti-action { opacity: 1 !important; }
+#abnerTaskModule .ti-action:hover {
+  background: rgba(239, 68, 68, 0.18) !important;
+  color: #f87171 !important;
+}
+#abnerTaskModule .note-item .ti-action[data-act="pin"]:hover {
+  background: rgba(59, 130, 246, 0.18) !important;
+  color: #60a5fa !important;
+}
+#abnerTaskModule .note-item.pinned {
+  border-color: rgba(59, 130, 246, 0.4) !important;
+  background: rgba(59, 130, 246, 0.06) !important;
+}
+
+/* ============================================================
+   ورودی جدید
+============================================================ */
+#abnerTaskModule .task-new-input-wrap {
+  flex-shrink: 0 !important;
+  border-radius: 16px !important;
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  padding: 10px 12px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+  position: relative !important;
+  width: 100% !important;
+}
+#abnerTaskModule .task-new-input-wrap .tn-inputs {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0 !important;
+  width: 100% !important;
+  align-items: stretch !important;
+}
+#abnerTaskModule input.tn-title {
+  display: block !important;
+  width: 100% !important;
+  padding: 4px 0 !important;
+  font-size: 13.5px !important;
+  font-weight: 700 !important;
+  color: #fff !important;
+  line-height: 1.4 !important;
+}
+#abnerTaskModule input.tn-title::placeholder { color: rgba(255, 255, 255, 0.5) !important; }
+#abnerTaskModule input.tn-desc {
+  display: block !important;
+  width: 100% !important;
+  padding: 2px 0 !important;
+  font-size: 11.5px !important;
+  font-weight: 500 !important;
+  color: rgba(255, 255, 255, 0.72) !important;
+  line-height: 1.4 !important;
+}
+#abnerTaskModule input.tn-desc::placeholder { color: rgba(255, 255, 255, 0.32) !important; }
+#abnerTaskModule .task-new-input-wrap .tn-toolbar {
+  display: flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  width: 100% !important;
+  flex-wrap: nowrap !important;
+}
+#abnerTaskModule .task-new-input-wrap .tn-icon {
+  width: 30px !important;
+  height: 30px !important;
+  min-width: 30px !important;
+  border-radius: 9px !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  background: transparent !important;
+  color: rgba(255, 255, 255, 0.7) !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: all 0.2s !important;
+  padding: 0 !important;
+  flex-shrink: 0 !important;
+}
+#abnerTaskModule .task-new-input-wrap .tn-icon:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: #fff !important;
+}
+#abnerTaskModule .task-new-input-wrap .tn-icon.active {
+  background: #3b82f6 !important;
+  color: #fff !important;
+  border-color: transparent !important;
+}
+#abnerTaskModule .task-new-input-wrap .tn-submit {
+  margin-inline-start: auto !important;
+  width: 34px !important;
+  height: 34px !important;
+  min-width: 34px !important;
+  border-radius: 50% !important;
+  border: none !important;
+  background: #3b82f6 !important;
+  color: #fff !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: all 0.2s !important;
+  padding: 0 !important;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4) !important;
+  flex-shrink: 0 !important;
+}
+#abnerTaskModule .task-new-input-wrap .tn-submit:hover {
+  background: #2563eb !important;
+  transform: scale(1.05) !important;
+}
+
+/* ============================================================
+   پاپ‌آور ورودی — شیشه‌ای
+============================================================ */
+#abnerTaskModule .tn-popover {
+  position: absolute !important;
+  bottom: calc(100% + 8px) !important;
+  right: 0 !important;
+  left: 0 !important;
+  padding: 10px !important;
+  border-radius: 14px !important;
+  background: rgba(var(--glass-rgba, 255, 255, 255), var(--glass-opacity, 0.28)) !important;
+  backdrop-filter: blur(var(--dash-blur-px, 16px)) !important;
+  -webkit-backdrop-filter: blur(var(--dash-blur-px, 16px)) !important;
+  border: 1px solid var(--dash-glass-border, rgba(255, 255, 255, 0.28)) !important;
+  box-shadow:
+    0 16px 40px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
+  z-index: 200 !important;
+  transform: translateZ(0);
+}
+#abnerTaskModule .tn-popover.hidden { display: none !important; }
+#abnerTaskModule .tn-pop-title {
+  font-size: 11.5px !important;
+  font-weight: 800 !important;
+  color: rgba(255, 255, 255, 0.65) !important;
+  margin-bottom: 8px !important;
+}
+#abnerTaskModule .tn-pop-row {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 5px !important;
+}
+#abnerTaskModule .tn-chip {
+  padding: 6px 10px !important;
+  border-radius: 9px !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  background: rgba(255, 255, 255, 0.06) !important;
+  color: rgba(255, 255, 255, 0.85) !important;
+  font-family: inherit !important;
+  font-size: 11.5px !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+}
+#abnerTaskModule .tn-chip:hover {
+  background: rgba(255, 255, 255, 0.14) !important;
+  color: #fff !important;
+}
+#abnerTaskModule .tn-chip.active {
+  background: #3b82f6 !important;
+  border-color: transparent !important;
+  color: #fff !important;
+}
+#abnerTaskModule .tn-date-input {
+  width: 100% !important;
+  padding: 7px 10px !important;
+  border-radius: 9px !important;
+  border: 1px solid rgba(255, 255, 255, 0.18) !important;
+  background: rgba(255, 255, 255, 0.06) !important;
+  color: #fff !important;
+  font-size: 12px !important;
+  outline: none !important;
+}
+
+/* ============================================================
+   پنل‌های بالا — شیشه‌ای
+============================================================ */
+.task-panel-pop {
+  min-width: 240px !important;
+  padding: 6px !important;
+  border-radius: 14px !important;
+  background: rgba(var(--glass-rgba, 255, 255, 255), var(--glass-opacity, 0.28)) !important;
+  backdrop-filter: blur(var(--dash-blur-px, 16px)) !important;
+  -webkit-backdrop-filter: blur(var(--dash-blur-px, 16px)) !important;
+  border: 1px solid var(--dash-glass-border, rgba(255, 255, 255, 0.28)) !important;
+  box-shadow:
+    0 20px 50px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 2px !important;
+  direction: rtl !important;
+  color: #f8fafc !important;
+  transform: translateZ(0);
+}
+.task-panel-pop .tp-more-item {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 9px 12px !important;
+  border-radius: 10px !important;
+  background: transparent !important;
+  border: none !important;
+  color: inherit !important;
+  font-family: inherit !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  transition: background 0.15s !important;
+  text-align: right !important;
+  width: 100% !important;
+}
+.task-panel-pop .tp-more-item:hover { background: rgba(255, 255, 255, 0.12) !important; }
+.task-panel-pop .tp-more-item.danger { color: #fca5a5 !important; }
+.task-panel-pop .tp-more-item.danger:hover { background: rgba(239, 68, 68, 0.18) !important; }
+.task-panel-pop .tp-divider {
+  height: 1px !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+  margin: 4px 6px !important;
+}
+.task-panel-pop .tp-checkbox {
+  width: 18px !important;
+  height: 18px !important;
+  border-radius: 6px !important;
+  border: 2px solid rgba(255, 255, 255, 0.4) !important;
+  background: transparent !important;
+  position: relative !important;
+  flex-shrink: 0 !important;
+}
+.task-panel-pop .tp-checkbox.checked {
+  background: #3b82f6 !important;
+  border-color: #3b82f6 !important;
+}
+.task-panel-pop .tp-checkbox.checked::after {
+  content: '' !important;
+  position: absolute !important;
+  left: 4px !important;
+  top: 1px !important;
+  width: 6px !important;
+  height: 10px !important;
+  border: solid #fff !important;
+  border-width: 0 2px 2px 0 !important;
+  transform: rotate(45deg) !important;
+}
+.task-panel-pop .tp-radio {
+  width: 16px !important;
+  height: 16px !important;
+  border-radius: 50% !important;
+  border: 2px solid rgba(255, 255, 255, 0.4) !important;
+  flex-shrink: 0 !important;
+  position: relative !important;
+}
+.task-panel-pop .tp-radio.active { border-color: #3b82f6 !important; }
+.task-panel-pop .tp-radio.active::after {
+  content: '' !important;
+  position: absolute !important;
+  inset: 3px !important;
+  border-radius: 50% !important;
+  background: #3b82f6 !important;
+}
+.task-panel-pop .tp-section {
+  padding: 8px 6px !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+.task-panel-pop .tp-section:last-of-type { border-bottom: none !important; }
+.task-panel-pop .tp-section-title {
+  font-size: 11.5px !important;
+  font-weight: 800 !important;
+  color: rgba(255, 255, 255, 0.6) !important;
+  padding: 4px 6px 6px !important;
+}
+.task-panel-pop .tp-chip-row {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 5px !important;
+}
+.task-panel-pop .tp-chip {
+  padding: 5px 10px !important;
+  border-radius: 9px !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  background: rgba(255, 255, 255, 0.06) !important;
+  color: rgba(255, 255, 255, 0.85) !important;
+  font-family: inherit !important;
+  font-size: 11.5px !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+}
+.task-panel-pop .tp-chip:hover {
+  background: rgba(255, 255, 255, 0.14) !important;
+  color: #fff !important;
+}
+.task-panel-pop .tp-chip.active {
+  background: #3b82f6 !important;
+  border-color: transparent !important;
+  color: #fff !important;
+}
+.task-panel-pop .tp-clear-btn {
+  margin: 6px !important;
+  padding: 8px !important;
+  border-radius: 10px !important;
+  border: 1px solid rgba(239, 68, 68, 0.4) !important;
+  background: rgba(239, 68, 68, 0.15) !important;
+  color: #fca5a5 !important;
+  font-family: inherit !important;
+  font-size: 12px !important;
+  font-weight: 800 !important;
+  cursor: pointer !important;
+}
+
+/* ============================================================
+   مودال تکرار — شیشه‌ای + بدون اسکرول
+============================================================ */
+.recurring-overlay {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 9999999 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 20px !important;
+  background: rgba(10, 15, 30, 0.35) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  animation: recFadeInReal 0.2s ease;
+}
+.recurring-overlay.hidden { display: none !important; }
+
+@keyframes recFadeInReal { from { opacity: 0; } to { opacity: 1; } }
+
+.recurring-modal {
+  width: 100%;
+  max-width: 500px;
+  max-height: 95vh;
+  overflow: visible !important;
+  padding: 22px 20px 18px;
+  border-radius: 24px;
+
+  background: rgba(var(--glass-rgba, 255, 255, 255), var(--glass-opacity, 0.28)) !important;
+  backdrop-filter: blur(var(--dash-blur-px, 16px)) !important;
+  -webkit-backdrop-filter: blur(var(--dash-blur-px, 16px)) !important;
+  border: 1px solid var(--dash-glass-border, rgba(255, 255, 255, 0.28)) !important;
+  box-shadow:
+    0 24px 60px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
+
+  color: #f8fafc;
+  direction: rtl;
+  animation: recScaleIn 0.25s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+  transform: translateZ(0);
+}
+.recurring-modal::-webkit-scrollbar { display: none !important; width: 0 !important; height: 0 !important; }
+.recurring-modal { scrollbar-width: none !important; }
+
+@keyframes recScaleIn {
+  from { opacity: 0; transform: translateY(20px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.recurring-title {
+  margin: 0 0 16px;
+  font-size: 18px;
+  font-weight: 900;
+  text-align: center;
+  color: #fff;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+}
+
+.recurring-row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
+  padding: 8px 0;
+}
+.recurring-row-col {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
 }
 
-.abner-input-row input {
-  flex: 1;
+.recurring-label {
+  font-size: 13px;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.92);
+  white-space: nowrap;
+  flex-shrink: 0;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+.recurring-interval-wrap {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  flex-shrink: 0;
+}
+.ri-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  border: none;
+  background: transparent;
+  color: #fff;
+  font-size: 17px;
+  font-weight: 900;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+  font-family: inherit;
+  padding: 0;
+}
+.ri-btn:hover { background: rgba(255, 255, 255, 0.15); }
+.ri-btn:active { transform: scale(0.94); }
+
+.ri-input {
+  width: 40px;
+  text-align: center;
   background: transparent;
   border: none;
+  color: #fff;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 800;
   outline: none;
-  color: #fff;
-  font-size: 13px;
-  font-family: inherit;
-  font-weight: 600;
 }
 
-.abner-input-row input::placeholder {
-  color: rgba(255, 255, 255, 0.5);
+.recurring-dropdown {
+  position: relative;
+  flex: 1;
+  min-width: 100px;
 }
 
-.abner-btn-submit {
-  background: var(--dash-accent-color, #2563eb);
-  color: #fff;
-  border: none;
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: transform 0.2s;
-}
-
-.abner-btn-submit:hover {
-  transform: scale(1.08);
-}
-
-/* نوار ابزار فرم */
-.abner-form-toolbar {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  overflow-x: auto;
-  padding-top: 2px;
-}
-
-.abner-chip-btn {
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  color: rgba(255, 255, 255, 0.85);
-  border-radius: 14px;
-  padding: 2px 8px;
-  font-size: 11px;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: all 0.2s;
-  font-family: inherit;
-}
-
-.abner-chip-btn:hover, .abner-chip-btn.active {
-  background: var(--dash-accent-color, #2563eb);
-  color: #fff;
-  border-color: transparent;
-}
-
-/* پاپ‌آپ‌های ابزار شناور */
-.abner-glass-popover {
-  position: absolute;
-  bottom: 80px;
-  background: var(--dash-glass-bg, rgba(20, 24, 35, 0.9)) !important;
-  backdrop-filter: blur(var(--dash-blur-px, 24px)) !important;
-  -webkit-backdrop-filter: blur(var(--dash-blur-px, 24px)) !important;
-  border: 1px solid var(--dash-glass-border, rgba(255, 255, 255, 0.25)) !important;
-  border-radius: 16px;
-  padding: 8px;
-  box-shadow: 0 14px 35px rgba(0, 0, 0, 0.5);
-  color: #fff;
-  z-index: 1000;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  animation: abnerPopIn 0.18s ease-out;
-}
-
-.abner-glass-popover.hidden {
-  display: none !important;
-}
-
-.popover-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 10px;
-  border-radius: 8px;
-  font-size: 12px;
-  cursor: pointer;
-  transition: background 0.15s;
-}
-
-.popover-item:hover {
-  background: rgba(255, 255, 255, 0.15);
-}
-
-.prio-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-}
-
-/* پنجره مدال ویرایش آیتم */
-.abner-modal-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 999999;
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  direction: rtl;
-  animation: abnerFadeIn 0.2s ease;
-}
-
-.abner-modal-card {
-  width: 90%;
-  max-width: 440px;
-  border-radius: 24px;
-  padding: 20px;
-  background: var(--dash-glass-bg, rgba(20, 24, 35, 0.75)) !important;
-  backdrop-filter: blur(var(--dash-blur-px, 24px)) !important;
-  -webkit-backdrop-filter: blur(var(--dash-blur-px, 24px)) !important;
-  border: 1px solid var(--dash-glass-border, rgba(255, 255, 255, 0.25)) !important;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  color: #fff;
-  animation: abnerScaleUp 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.abner-modal-header {
+.rd-trigger {
+  width: 100%;
   display: flex;
   align-items: center;
   justify-content: space-between;
-}
-
-.abner-modal-header h3 {
-  margin: 0;
-  font-size: 15px;
-  font-weight: 700;
-}
-
-.abner-modal-input, .abner-modal-textarea {
-  width: 100%;
-  box-sizing: border-box;
-  background: rgba(0, 0, 0, 0.25);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  padding: 9px 14px;
   border-radius: 12px;
-  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   color: #fff;
-  font-size: 13px;
   font-family: inherit;
-  outline: none;
+  font-size: 13.5px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s;
+  gap: 8px;
+}
+.rd-trigger:hover {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.35);
+}
+.rd-trigger svg { opacity: 0.75; flex-shrink: 0; }
+
+.rd-menu {
+  position: fixed; /* ✅ چون از مودال بیرون میاد */
+  padding: 6px;
+  border-radius: 14px;
+
+  /* ✅ شیشه‌ای واقعی — متصل به اسلایدر ماتی */
+  background: rgba(var(--glass-rgba, 255, 255, 255), var(--glass-opacity, 0.28)) !important;
+  backdrop-filter: blur(var(--dash-blur-px, 16px)) !important;
+  -webkit-backdrop-filter: blur(var(--dash-blur-px, 16px)) !important;
+  border: 1px solid var(--dash-glass-border, rgba(255, 255, 255, 0.28)) !important;
+  box-shadow:
+    0 16px 40px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
+
+  z-index: 9999999; /* بالاتر از مودال */
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  animation: ddIn 0.18s ease;
+
+  max-height: none !important;
+  overflow: visible !important;
+  transform: translateZ(0);
+  isolation: isolate;
+  will-change: backdrop-filter;
+}
+.rd-menu::-webkit-scrollbar { display: none !important; }
+.rd-menu.hidden { display: none !important; }
+
+@keyframes ddIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
-.abner-modal-textarea {
-  resize: none;
-  min-height: 80px;
-}
-
-.abner-modal-footer {
+.rd-item {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
-  gap: 8px;
-  margin-top: 6px;
+  justify-content: space-between;
+  padding: 9px 12px;
+  border-radius: 10px;
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.9);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s;
+  text-align: right;
+  width: 100%;
+}
+.rd-item:hover { background: rgba(255, 255, 255, 0.14); }
+.rd-item.active {
+  background: rgba(59, 130, 246, 0.3);
+  color: #fff;
 }
 
-.abner-btn-primary {
-  background: var(--dash-accent-color, #2563eb);
+.recurring-divider {
+  height: 1px;
+  border-top: 1px dashed rgba(255, 255, 255, 0.2);
+  margin: 6px 0;
+}
+
+.recur-weekdays {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+
+.recur-pill-day {
+  padding: 10px 6px;
+  border-radius: 11px;
+  border: 1.5px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.9);
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+  white-space: nowrap;
+}
+.recur-pill-day:hover {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+.recur-pill-day.active {
+  background: #3b82f6;
+  border-color: #3b82f6;
   color: #fff;
-  border: none;
-  padding: 8px 18px;
-  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.45);
+}
+
+.recur-days-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 5px;
+}
+.recur-pill-num {
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.85);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  padding: 0;
+}
+.recur-pill-num:hover {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+.recur-pill-num.active {
+  background: #3b82f6;
+  border-color: #3b82f6;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.45);
+}
+
+.recur-months-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+.recur-pill-month {
+  padding: 10px 6px;
+  border-radius: 11px;
+  border: 1.5px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.9);
+  font-family: inherit;
   font-size: 12.5px;
   font-weight: 700;
   cursor: pointer;
-  font-family: inherit;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.recur-pill-month:hover {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+.recur-pill-month.active {
+  background: #3b82f6;
+  border-color: #3b82f6;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.45);
 }
 
-.abner-btn-secondary {
-  background: rgba(255, 255, 255, 0.1);
+.recurring-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.recur-btn-cancel,
+.recur-btn-confirm {
+  flex: 1;
+  padding: 11px;
+  border-radius: 13px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.recur-btn-cancel {
+  background: rgba(255, 255, 255, 0.08);
   color: #fff;
   border: 1px solid rgba(255, 255, 255, 0.2);
-  padding: 8px 14px;
-  border-radius: 12px;
-  font-size: 12px;
-  cursor: pointer;
-  font-family: inherit;
+}
+.recur-btn-cancel:hover { background: rgba(255, 255, 255, 0.16); }
+
+.recur-btn-confirm {
+  background: #3b82f6;
+  color: #fff;
+  box-shadow: 0 6px 18px rgba(59, 130, 246, 0.45);
+}
+.recur-btn-confirm:hover { background: #2563eb; transform: translateY(-1px); }
+
+/* ============================================================
+   تم لایت
+============================================================ */
+body.theme-light #abnerTaskModule .tab-btn { color: rgba(42, 31, 20, 0.65) !important; }
+body.theme-light #abnerTaskModule .tab-btn.active { color: #fff !important; }
+body.theme-light #abnerTaskModule .task-tabs { background: rgba(0, 0, 0, 0.06) !important; }
+body.theme-light #abnerTaskModule .task-action-bar .min-icon-btn {
+  background: rgba(0, 0, 0, 0.04) !important;
+  border-color: rgba(0, 0, 0, 0.12) !important;
+  color: rgba(42, 31, 20, 0.75) !important;
+}
+body.theme-light #abnerTaskModule .tes-title { color: #2a1f14 !important; }
+body.theme-light #abnerTaskModule .tes-sub { color: rgba(42, 31, 20, 0.6) !important; }
+body.theme-light #abnerTaskModule .tes-suggestions li { color: rgba(42, 31, 20, 0.7) !important; }
+body.theme-light #abnerTaskModule .ti-title { color: #2a1f14 !important; }
+body.theme-light #abnerTaskModule .ti-desc { color: rgba(42, 31, 20, 0.65) !important; }
+body.theme-light #abnerTaskModule .task-item {
+  background: rgba(0, 0, 0, 0.03) !important;
+  border-color: rgba(0, 0, 0, 0.08) !important;
+}
+body.theme-light #abnerTaskModule .ti-check {
+  border-color: rgba(0, 0, 0, 0.25) !important;
+  color: #2a1f14 !important;
+}
+body.theme-light #abnerTaskModule .ti-action { color: rgba(0, 0, 0, 0.4) !important; }
+body.theme-light #abnerTaskModule input.tn-title,
+body.theme-light #abnerTaskModule input.tn-desc { color: #2a1f14 !important; }
+body.theme-light #abnerTaskModule input.tn-title::placeholder { color: rgba(42, 31, 20, 0.4) !important; }
+body.theme-light #abnerTaskModule input.tn-desc::placeholder { color: rgba(42, 31, 20, 0.3) !important; }
+body.theme-light #abnerTaskModule .task-new-input-wrap {
+  background: rgba(0, 0, 0, 0.03) !important;
+  border-color: rgba(0, 0, 0, 0.08) !important;
+}
+body.theme-light #abnerTaskModule .tn-icon {
+  border-color: rgba(0, 0, 0, 0.12) !important;
+  color: rgba(42, 31, 20, 0.7) !important;
+}
+body.theme-light #abnerTaskModule .tn-popover,
+body.theme-light .task-panel-pop {
+  background: rgba(255, 252, 245, var(--glass-opacity, 0.28)) !important;
+  border-color: rgba(120, 90, 50, 0.22) !important;
+  color: #2a1f14 !important;
+  backdrop-filter: blur(var(--dash-blur-px, 16px)) !important;
+  -webkit-backdrop-filter: blur(var(--dash-blur-px, 16px)) !important;
+}
+body.theme-light #abnerTaskModule .tn-chip,
+body.theme-light .task-panel-pop .tp-chip {
+  background: rgba(0, 0, 0, 0.04) !important;
+  border-color: rgba(0, 0, 0, 0.12) !important;
+  color: rgba(42, 31, 20, 0.8) !important;
+}
+body.theme-light .task-panel-pop .tp-more-item:hover { background: rgba(0, 0, 0, 0.06) !important; }
+body.theme-light .task-panel-pop .tp-section { border-color: rgba(0, 0, 0, 0.08) !important; }
+body.theme-light #abnerTaskModule .tn-pop-title { color: rgba(42, 31, 20, 0.65) !important; }
+body.theme-light .task-panel-pop .tp-section-title { color: rgba(42, 31, 20, 0.6) !important; }
+body.theme-light .task-panel-pop .tp-divider { background: rgba(0, 0, 0, 0.1) !important; }
+body.theme-light .task-panel-pop .tp-checkbox,
+body.theme-light .task-panel-pop .tp-radio { border-color: rgba(0, 0, 0, 0.3) !important; }
+
+body.theme-light .recurring-modal {
+  background: rgba(255, 252, 245, var(--glass-opacity, 0.28)) !important;
+  border-color: rgba(120, 90, 50, 0.22) !important;
+  color: #2a1f14 !important;
+  backdrop-filter: blur(var(--dash-blur-px, 16px)) !important;
+  -webkit-backdrop-filter: blur(var(--dash-blur-px, 16px)) !important;
+}
+body.theme-light .recurring-title {
+  color: #2a1f14;
+  border-bottom-color: rgba(0, 0, 0, 0.1);
+  text-shadow: none;
+}
+body.theme-light .recurring-label { color: #2a1f14; text-shadow: none; }
+body.theme-light .recurring-divider { border-top-color: rgba(0, 0, 0, 0.12); }
+body.theme-light .recurring-interval-wrap,
+body.theme-light .rd-trigger {
+  background: rgba(0, 0, 0, 0.05);
+  border-color: rgba(0, 0, 0, 0.12);
+  color: #2a1f14;
+}
+body.theme-light .ri-btn { color: #2a1f14; }
+body.theme-light .ri-btn:hover { background: rgba(0, 0, 0, 0.06); }
+body.theme-light .ri-input { color: #2a1f14; }
+body.theme-light .rd-menu {
+  background: rgba(255, 252, 245, var(--glass-opacity, 0.28)) !important;
+  border-color: rgba(120, 90, 50, 0.22) !important;
+  backdrop-filter: blur(var(--dash-blur-px, 16px)) !important;
+  -webkit-backdrop-filter: blur(var(--dash-blur-px, 16px)) !important;
+}
+body.theme-light .rd-item { color: #2a1f14; }
+body.theme-light .rd-item:hover { background: rgba(0, 0, 0, 0.06); }
+body.theme-light .rd-item.active {
+  background: rgba(59, 130, 246, 0.15);
+  color: #1e40af;
+}
+body.theme-light .recur-pill-day,
+body.theme-light .recur-pill-num,
+body.theme-light .recur-pill-month {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.15);
+  color: #2a1f14;
+}
+body.theme-light .recur-pill-day:hover,
+body.theme-light .recur-pill-num:hover,
+body.theme-light .recur-pill-month:hover {
+  background: rgba(0, 0, 0, 0.08);
+  border-color: rgba(0, 0, 0, 0.3);
+}
+body.theme-light .recur-pill-day.active,
+body.theme-light .recur-pill-num.active,
+body.theme-light .recur-pill-month.active {
+  background: #3b82f6;
+  border-color: #3b82f6;
+  color: #fff;
+}
+body.theme-light .recur-btn-cancel {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.12);
+  color: #2a1f14;
+}
+body.theme-light .recurring-actions { border-top-color: rgba(0, 0, 0, 0.1); }
+
+/* ============================================================
+   تم دارک
+============================================================ */
+body.theme-dark #abnerTaskModule .tn-popover,
+body.theme-dark .task-panel-pop {
+  background: rgba(15, 23, 42, var(--glass-opacity, 0.5)) !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
+  backdrop-filter: blur(var(--dash-blur-px, 16px)) !important;
+  -webkit-backdrop-filter: blur(var(--dash-blur-px, 16px)) !important;
+}
+body.theme-dark .recurring-modal {
+  background: rgba(15, 23, 42, var(--glass-opacity, 0.5)) !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
+  backdrop-filter: blur(var(--dash-blur-px, 16px)) !important;
+  -webkit-backdrop-filter: blur(var(--dash-blur-px, 16px)) !important;
+}
+body.theme-dark .rd-menu {
+  background: rgba(15, 23, 42, var(--glass-opacity, 0.5)) !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
+  backdrop-filter: blur(var(--dash-blur-px, 16px)) !important;
+  -webkit-backdrop-filter: blur(var(--dash-blur-px, 16px)) !important;
 }
 
-@keyframes abnerPopIn {
-  from { opacity: 0; transform: translateY(6px); }
-  to { opacity: 1; transform: translateY(0); }
+/* ============================================================
+   موبایل
+============================================================ */
+@media (max-width: 1024px) {
+  .task-panel-pop {
+    min-width: 220px !important;
+    max-width: calc(100vw - 20px) !important;
+  }
+  #abnerTaskModule { padding: 14px !important; }
+  #abnerTaskModule .ti-title { font-size: 13px !important; }
+  #abnerTaskModule input.tn-title { font-size: 13px !important; }
+  #abnerTaskModule .tn-icon { width: 28px !important; height: 28px !important; min-width: 28px !important; }
+  #abnerTaskModule .tn-submit { width: 32px !important; height: 32px !important; min-width: 32px !important; }
 }
 
-@keyframes abnerFadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes abnerScaleUp {
-  from { opacity: 0; transform: scale(0.95); }
-  to { opacity: 1; transform: scale(1); }
+@media (max-width: 480px) {
+  .recurring-overlay {
+    padding: 12px !important;
+    align-items: flex-start !important;
+    padding-top: 30px !important;
+  }
+  .recurring-modal {
+    padding: 18px 14px 14px;
+    border-radius: 20px;
+    max-width: none;
+  }
+  .recurring-title { font-size: 16px; margin-bottom: 14px; padding-bottom: 10px; }
+  .recurring-row { flex-wrap: wrap; gap: 8px; }
+  .recurring-label { font-size: 12px; }
+  .recur-weekdays { grid-template-columns: repeat(2, 1fr); }
+  .recur-pill-day { font-size: 12px; padding: 9px 4px; }
+  .recur-days-grid { gap: 4px; }
+  .recur-pill-num { font-size: 11px; }
+  .recur-pill-month { font-size: 11px; padding: 8px 4px; }
+  .recur-btn-cancel, .recur-btn-confirm { font-size: 13px; padding: 10px; }
 }
