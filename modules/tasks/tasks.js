@@ -1,4 +1,4 @@
-/* ============ ماژول تسک و یادداشت - آبنر v15 (کامل) ============ */
+/* ============ ماژول تسک و یادداشت - آبنر v16 (کامل) ============ */
 
 import { getToken, getUser, refreshToken } from '../auth/auth.js';
 
@@ -6,6 +6,7 @@ const STORAGE_KEY = 'abner_tasks_v2';
 const SYNC_QUEUE_KEY = 'abner_sync_queue';
 const PENDING_DELETES_KEY = 'abner_pending_deletes';
 const GOOGLE_TASKS_LIST_ID = '@default';
+const UNDO_DELAY_MS = 8000;
 
 const DEFAULT_TAGS = [
   { id: 'personal', name: 'شخصی',  color: '#38bdf8' },
@@ -179,7 +180,7 @@ function dispatchSyncStatus() {
 }
 
 /* ============================================================
-   Pending Deletes Queue
+   Pending Deletes Queue (مقاوم به reload/قطع اینترنت)
 ============================================================ */
 function loadPendingDeletes() {
   try { return JSON.parse(localStorage.getItem(PENDING_DELETES_KEY) || '[]'); } catch (_) { return []; }
@@ -197,6 +198,7 @@ function addPendingDelete(task) {
     calendarEventId: task.calendarEventId || null,
     tasksApiId: task.tasksApiId || null,
     ts: Date.now(),
+    processAfter: Date.now() + UNDO_DELAY_MS,
   });
   savePendingDeletes(list);
 }
@@ -210,10 +212,15 @@ export async function processPendingDeletes() {
   const list = loadPendingDeletes();
   if (list.length === 0) return;
 
-  isProcessingDeletes = true;
-  console.log('🗑️ پردازش صف حذف:', list.length, 'مورد');
+  const now = Date.now();
+  // فقط آیتم‌هایی که مهلت Undo اونها گذشته
+  const ready = list.filter(item => !item.processAfter || item.processAfter <= now);
+  if (ready.length === 0) return;
 
-  for (const item of list) {
+  isProcessingDeletes = true;
+  console.log('🗑️ پردازش صف حذف:', ready.length, 'مورد');
+
+  for (const item of ready) {
     try {
       if (item.calendarEventId) {
         await deleteTaskCalendarEvent({ calendarEventId: item.calendarEventId });
@@ -568,7 +575,7 @@ function showUndoToast(message, onUndo) {
     hideUndoToast();
     document.removeEventListener('keydown', ctrlZHandler);
     deletedBackup = null;
-  }, 8000);
+  }, UNDO_DELAY_MS);
 }
 function hideUndoToast() {
   const existing = document.getElementById('abnerUndoToast');
@@ -731,6 +738,9 @@ function deleteTask(id) {
   const [removed] = state.tasks.splice(idx, 1);
   deletedBackup = { task: removed, index: idx };
 
+  // 🆕 بلافاصله در صف حذف ثبت کن (با مهلت Undo ۸ ثانیه)
+  addPendingDelete(removed);
+
   persist();
   render();
 
@@ -746,10 +756,9 @@ function deleteTask(id) {
 
   setTimeout(() => {
     if (!deletedBackup || deletedBackup.task.id !== removed.id) {
-      addPendingDelete(removed);
       processPendingDeletes();
     }
-  }, 8000);
+  }, UNDO_DELAY_MS);
 }
 
 function deleteNote(id) {
