@@ -1,6 +1,6 @@
-/* ============ ماژول تسک و یادداشت - آبنر v13 (Sync کامل) ============ */
+/* ============ ماژول تسک و یادداشت - آبنر v14 (کامل با Sync مقاوم) ============ */
 
-import { getToken, getUser } from '../auth/auth.js';
+import { getToken, getUser, refreshToken } from '../auth/auth.js';
 
 const STORAGE_KEY = 'abner_tasks_v2';
 const SYNC_QUEUE_KEY = 'abner_sync_queue';
@@ -68,16 +68,13 @@ let selectedDateInPicker = null;
 let timeDraft = { h: 12, m: 0 };
 let currentPopoverKind = null;
 
-/* ---------- Undo Toast State ---------- */
 let deletedBackup = null;
 let undoToastTimer = null;
-
-/* ---------- Sync Queue State ---------- */
 let syncQueue = [];
 let isProcessingQueue = false;
 
 /* ============================================================
-   تبدیل تقویم جلالی
+   تقویم جلالی
 ============================================================ */
 function _div(a,b){return ~~(a/b);}
 function _mod(a,b){return a-~~(a/b)*b;}
@@ -185,28 +182,42 @@ function dispatchSyncStatus() {
 }
 
 /* ============================================================
+   🆕 Helper: درخواست با retry خودکار روی 401
+============================================================ */
+async function fetchWithRetry(makeRequest) {
+  let token = await getToken();
+  if (!token) return { ok: false, status: 0, reason: 'no-token' };
+
+  let res = await makeRequest(token);
+
+  if (res.status === 401) {
+    // توکن منقضی شده → refresh
+    const newToken = await refreshToken();
+    if (newToken) {
+      res = await makeRequest(newToken);
+    }
+  }
+
+  return res;
+}
+
+/* ============================================================
    Google Calendar Sync
 ============================================================ */
 async function syncTaskToCalendar(task) {
-  // بدون تاریخ → نمیشه event ساخت، ولی بقیه چیزها اوکیه
   if (!task || !task.dueDate) return { ok: true, skipped: true };
   const user = getUser();
   if (!user) return { ok: false, reason: 'no-user' };
 
   try {
-    const token = await getToken();
-    if (!token) return { ok: false, reason: 'no-token' };
-
     const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
     let event;
 
     if (task.dueTime) {
-      // 🕐 تسک با تاریخ + ساعت → Event زماندار
       const date = new Date(task.dueDate);
       const [hh, mm] = task.dueTime.split(':').map(Number);
       date.setHours(hh || 0, mm || 0, 0, 0);
       const endDate = new Date(date.getTime() + 30 * 60 * 1000);
-
       event = {
         summary: task.title,
         description: task.description || '',
@@ -214,20 +225,10 @@ async function syncTaskToCalendar(task) {
         end:   { dateTime: endDate.toISOString(), timeZone },
       };
     } else {
-      // 📅 تسک فقط با تاریخ → All-day Event
       const d = new Date(task.dueDate);
-      const yyyy = d.getFullYear();
-      const mm2 = String(d.getMonth() + 1).padStart(2, '0');
-      const dd = String(d.getDate()).padStart(2, '0');
-      const dateStr = `${yyyy}-${mm2}-${dd}`;
-
-      const nextDay = new Date(d);
-      nextDay.setDate(nextDay.getDate() + 1);
-      const y2 = nextDay.getFullYear();
-      const m2 = String(nextDay.getMonth() + 1).padStart(2, '0');
-      const d2 = String(nextDay.getDate()).padStart(2, '0');
-      const nextDateStr = `${y2}-${m2}-${d2}`;
-
+      const dateStr = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+      const nextDay = new Date(d); nextDay.setDate(nextDay.getDate() + 1);
+      const nextDateStr = `${nextDay.getFullYear()}-${String(nextDay.getMonth()+1).padStart(2,'0')}-${String(nextDay.getDate()).padStart(2,'0')}`;
       event = {
         summary: task.title,
         description: task.description || '',
@@ -236,7 +237,6 @@ async function syncTaskToCalendar(task) {
       };
     }
 
-    // 🔁 تکرار → RRULE (Calendar پشتیبانی کامل داره)
     if (task.recurring) {
       const rec = task.recurring;
       const freqMap = { daily: 'DAILY', weekly: 'WEEKLY', monthly: 'MONTHLY', yearly: 'YEARLY' };
@@ -249,33 +249,33 @@ async function syncTaskToCalendar(task) {
       if (rec.monthDays && rec.monthDays.length) {
         rrule += `;BYMONTHDAY=${rec.monthDays.join(',')}`;
       }
-      if (rec.months && rec.months.length) {
-        rrule += `;BYMONTH=${rec.months.map(m => m + 1).join(',')}`;
-      }
       event.recurrence = [rrule];
     }
 
-    let url, method;
-    if (task.calendarEventId) {
-      url = `https://www.googleapis.com/calendar/v3/calendars/primary/events/${task.calendarEventId}`;
-      method = 'PUT';
-    } else {
-      url = 'https://www.googleapis.com/calendar/v3/calendars/primary/events';
-      method = 'POST';
-    }
+    const makeRequest = (token) => {
+      const url = task.calendarEventId
+        ? `https://www.googleapis.com/calendar/v3/calendars/primary/events/${task.calendarEventId}`
+        : 'https://www.googleapis.com/calendar/v3/calendars/primary/events';
+      const method = task.calendarEventId ? 'PUT' : 'POST';
+      return fetch(url, {
+        method,
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(event),
+      });
+    };
 
-    const res = await fetch(url, {
-      method,
-      headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify(event),
-    });
+    let res = await fetchWithRetry(makeRequest);
+
+    // اگه event قبلاً پاک شده → دوباره بساز
+    if (res.status === 404 && task.calendarEventId) {
+      delete task.calendarEventId;
+      persist();
+      res = await fetchWithRetry(makeRequest);
+    }
 
     if (res.ok) {
       const data = await res.json();
-      if (!task.calendarEventId && data.id) {
-        task.calendarEventId = data.id;
-        persist();
-      }
+      if (data.id) { task.calendarEventId = data.id; persist(); }
       return { ok: true };
     }
     return { ok: false, reason: 'http-' + res.status };
@@ -283,6 +283,19 @@ async function syncTaskToCalendar(task) {
     return { ok: false, reason: 'exception', error: e };
   }
 }
+
+async function deleteTaskCalendarEvent(task) {
+  if (!task || !task.calendarEventId) return { ok: true, skipped: true };
+  try {
+    const makeRequest = (token) => fetch(
+      `https://www.googleapis.com/calendar/v3/calendars/primary/events/${task.calendarEventId}`,
+      { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } }
+    );
+    const res = await fetchWithRetry(makeRequest);
+    return { ok: res.ok || res.status === 404 };
+  } catch (_) { return { ok: false }; }
+}
+
 /* ============================================================
    Google Tasks Sync
 ============================================================ */
@@ -292,42 +305,40 @@ async function syncTaskToGoogleTasks(task) {
   if (!user) return { ok: false, reason: 'no-user' };
 
   try {
-    const token = await getToken();
-    if (!token) return { ok: false, reason: 'no-token' };
-
     const taskBody = {
       title: task.title,
       notes: task.description || '',
       status: task.completed ? 'completed' : 'needsAction',
     };
-
     if (task.dueDate) {
       const d = new Date(task.dueDate);
       d.setUTCHours(0, 0, 0, 0);
       taskBody.due = d.toISOString();
     }
 
-    let url, method;
-    if (task.tasksApiId) {
-      url = `https://tasks.googleapis.com/tasks/v1/lists/${GOOGLE_TASKS_LIST_ID}/tasks/${task.tasksApiId}`;
-      method = 'PATCH';
-    } else {
-      url = `https://tasks.googleapis.com/tasks/v1/lists/${GOOGLE_TASKS_LIST_ID}/tasks`;
-      method = 'POST';
-    }
+    const makeRequest = (token) => {
+      const url = task.tasksApiId
+        ? `https://tasks.googleapis.com/tasks/v1/lists/${GOOGLE_TASKS_LIST_ID}/tasks/${task.tasksApiId}`
+        : `https://tasks.googleapis.com/tasks/v1/lists/${GOOGLE_TASKS_LIST_ID}/tasks`;
+      const method = task.tasksApiId ? 'PATCH' : 'POST';
+      return fetch(url, {
+        method,
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(taskBody),
+      });
+    };
 
-    const res = await fetch(url, {
-      method,
-      headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify(taskBody),
-    });
+    let res = await fetchWithRetry(makeRequest);
+
+    if (res.status === 404 && task.tasksApiId) {
+      delete task.tasksApiId;
+      persist();
+      res = await fetchWithRetry(makeRequest);
+    }
 
     if (res.ok) {
       const data = await res.json();
-      if (!task.tasksApiId && data.id) {
-        task.tasksApiId = data.id;
-        persist();
-      }
+      if (data.id) { task.tasksApiId = data.id; persist(); }
       return { ok: true };
     }
     return { ok: false, reason: 'http-' + res.status };
@@ -339,12 +350,11 @@ async function syncTaskToGoogleTasks(task) {
 async function deleteTaskFromGoogleTasks(task) {
   if (!task || !task.tasksApiId) return { ok: true, skipped: true };
   try {
-    const token = await getToken();
-    if (!token) return { ok: false };
-    const res = await fetch(
+    const makeRequest = (token) => fetch(
       `https://tasks.googleapis.com/tasks/v1/lists/${GOOGLE_TASKS_LIST_ID}/tasks/${task.tasksApiId}`,
       { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } }
     );
+    const res = await fetchWithRetry(makeRequest);
     return { ok: res.ok || res.status === 404 };
   } catch (_) { return { ok: false }; }
 }
@@ -360,7 +370,7 @@ async function syncTaskEverywhere(task) {
     syncTaskToGoogleTasks(task),
   ]);
   const hasFailure = results.some(r =>
-    r.status === 'rejected' || (r.value && r.value.ok === false)
+    r.status === 'rejected' || (r.value && r.value.ok === false && r.value.reason !== 'skipped')
   );
   if (hasFailure) enqueue('sync', task);
 }
@@ -677,7 +687,6 @@ function attachItemEvents(list) {
   });
 }
 
-/* ---------- عملیات ---------- */
 function toggleTask(id) {
   const t = state.tasks.find(x => x.id === id); if (!t) return;
   t.completed = !t.completed; persist(); render();
@@ -741,7 +750,6 @@ function clearTaskDate(id) {
   syncTaskToGoogleTasks(t);
 }
 
-/* ---------- افزودن تسک ---------- */
 function submitNew() {
   const titleEl = document.getElementById('tnTitle');
   const descEl = document.getElementById('tnDesc');
@@ -776,7 +784,6 @@ function submitNew() {
   }
 }
 
-/* ---------- به‌روزرسانی وضعیت نوار ابزار ---------- */
 function updateToolbarState() {
   const d = inputDraft;
   const prioBtn = document.getElementById('tnPriority');
@@ -852,8 +859,6 @@ function positionPopover(pop, triggerOrId) {
   pop.style.position = 'fixed';
   pop.style.top = '-9999px';
   pop.style.left = '-9999px';
-  pop.style.right = 'auto';
-  pop.style.bottom = 'auto';
   void pop.offsetHeight;
 
   const tRect = trigger.getBoundingClientRect();
@@ -1263,7 +1268,7 @@ function bindDatePicker() {
 }
 
 /* ============================================================
-   مودال تکرار
+   Recurring Modal
 ============================================================ */
 function openRecurringModal() {
   const d = getActiveDraft();
@@ -1461,7 +1466,7 @@ function attachRecurringEvents() {
 }
 
 /* ============================================================
-   مودال ویرایش تسک
+   Edit Modal
 ============================================================ */
 function openEditModal(taskId) {
   const task = state.tasks.find(t => t.id === taskId);
@@ -1610,7 +1615,7 @@ function submitEdit() {
 }
 
 /* ============================================================
-   پنل‌های بالا
+   Panels
 ============================================================ */
 function closeAllPanels() {
   document.querySelectorAll('.task-panel-pop').forEach(el => el.remove());
