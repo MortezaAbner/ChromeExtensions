@@ -1,4 +1,4 @@
-/* ============ احراز هویت گوگل - آبنر (v2) ============ */
+/* ============ احراز هویت گوگل - آبنر (v3) ============ */
 
 const AUTH_KEY = 'abner_auth_user';
 const FIRST_INSTALL_KEY = 'abner_first_install_done';
@@ -15,6 +15,7 @@ const SCOPES = [
 let currentUser = null;
 let currentToken = null;
 let gisLoaded = false;
+let webTokenClient = null;   // 🆕 برای refresh در PWA
 
 /* ---------- تشخیص حالت ---------- */
 function isExtension() {
@@ -52,38 +53,6 @@ async function signInExtension() {
           id: info.id || '',
         });
       } catch (e) { reject(e); }
-    });
-  });
-}
-
-export async function refreshToken() {
-  if (!isExtension()) return null;
-
-  return new Promise((resolve) => {
-    // اول تلاش بدون interactive
-    chrome.identity.getAuthToken({ interactive: false }, (token) => {
-      if (!chrome.runtime.lastError && token) {
-        currentToken = token;
-        if (currentUser) {
-          currentUser.token = token;
-          saveUser(currentUser);
-        }
-        resolve(token);
-        return;
-      }
-      // بعد interactive
-      chrome.identity.getAuthToken({ interactive: true }, (newToken) => {
-        if (chrome.runtime.lastError || !newToken) {
-          resolve(null);
-          return;
-        }
-        currentToken = newToken;
-        if (currentUser) {
-          currentUser.token = newToken;
-          saveUser(currentUser);
-        }
-        resolve(newToken);
-      });
     });
   });
 }
@@ -147,7 +116,71 @@ async function signInWebPWA() {
       },
     });
 
+    webTokenClient = client;   // 🆕 ذخیره client برای refresh بعدی
     client.requestAccessToken();
+  });
+}
+
+/* ============================================================
+   🆕 Refresh Token — هم افزونه هم PWA
+============================================================ */
+export async function refreshToken() {
+  /* ---------- افزونه کروم ---------- */
+  if (isExtension()) {
+    return new Promise((resolve) => {
+      chrome.identity.getAuthToken({ interactive: false }, (token) => {
+        if (!chrome.runtime.lastError && token) {
+          currentToken = token;
+          if (currentUser) {
+            currentUser.token = token;
+            saveUser(currentUser);
+          }
+          resolve(token);
+          return;
+        }
+        chrome.identity.getAuthToken({ interactive: true }, (newToken) => {
+          if (chrome.runtime.lastError || !newToken) {
+            resolve(null);
+            return;
+          }
+          currentToken = newToken;
+          if (currentUser) {
+            currentUser.token = newToken;
+            saveUser(currentUser);
+          }
+          resolve(newToken);
+        });
+      });
+    });
+  }
+
+  /* ---------- PWA ---------- */
+  if (!window.google?.accounts?.oauth2) return null;
+
+  return new Promise((resolve) => {
+    try {
+      const tempClient = window.google.accounts.oauth2.initTokenClient({
+        client_id: WEB_CLIENT_ID,
+        scope: SCOPES.join(' '),
+        callback: async (response) => {
+          if (response.error || !response.access_token) {
+            resolve(null);
+            return;
+          }
+          const newToken = response.access_token;
+          currentToken = newToken;
+          if (currentUser) {
+            currentUser.token = newToken;
+            saveUser(currentUser);
+          }
+          resolve(newToken);
+        },
+      });
+      // prompt: '' → silent refresh (بدون پاپ‌آپ)
+      tempClient.requestAccessToken({ prompt: '' });
+    } catch (_) {
+      resolve(null);
+    }
   });
 }
 
@@ -196,6 +229,7 @@ export async function signOut() {
         window.google.accounts.oauth2.revoke(currentToken, () => {});
       }
     } catch (_) {}
+    webTokenClient = null;
   }
 
   currentUser = null;
