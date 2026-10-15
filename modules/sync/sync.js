@@ -207,9 +207,22 @@ async function downloadAll() {
 
     const remote = await downloadFile(file.id);
     if (remote.data) {
+      // 🆕 قبل از apply، لوکال رو هم بگیر و مقایسه کن
+      const local = await collectLocalData();
+      const remoteStr = JSON.stringify(remote.data);
+      const localStr = JSON.stringify(local);
+
+      // اگه داده یکسانه، نیازی به reload نیست
+      if (remoteStr === localStr) {
+        setStatus('synced');
+        isSyncing = false;
+        return;
+      }
+
       await applyRemoteData(remote.data);
       window.dispatchEvent(new CustomEvent('sync-complete', { detail: { direction: 'download' } }));
       setTimeout(() => window.location.reload(), 500);
+      return;
     }
     setStatus('synced');
   } catch (e) {
@@ -285,5 +298,11 @@ export async function initSync() {
   }, 5 * 60 * 1000);
 
   /* اولین sync بعد از ۳ ثانیه */
-  if (user) setTimeout(syncNow, 3000);
+    // 🆕 اگه کاربر لاگینه، اول از Drive دانلود کن، بعد آپلود
+  if (user) {
+    setTimeout(async () => {
+      await downloadAll();     // ← این خط قبلاً نبود!
+      await uploadAll();
+    }, 3000);
+  }
 }
