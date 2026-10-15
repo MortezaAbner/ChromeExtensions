@@ -1,4 +1,4 @@
-/* ============ همگام‌سازی با گوگل درایو - آبنر (v5) ============ */
+/* ============ همگام‌سازی با گوگل درایو - آبنر (v6) ============ */
 
 import { getToken, getUser, refreshToken } from '../auth/auth.js';
 
@@ -116,6 +116,39 @@ function collectLocalData() {
 }
 
 function applyRemoteData(data) {
+  // 🆕 تشخیص تسک‌های حذف‌شده از دستگاه دیگه
+  try {
+    const oldTasksRaw = localStorage.getItem('abner_tasks_v2');
+    const newTasksRaw = data.abner_tasks_v2;
+    if (oldTasksRaw && newTasksRaw) {
+      const oldTasks = (JSON.parse(oldTasksRaw).tasks || []);
+      const newTasks = (JSON.parse(newTasksRaw).tasks || []);
+      const newIds = new Set(newTasks.map(t => t.id));
+      const removed = oldTasks.filter(t => !newIds.has(t.id) && (t.calendarEventId || t.tasksApiId));
+      if (removed.length > 0) {
+        console.log('🗑️ تسک‌های حذف‌شده از دستگاه دیگه:', removed.length);
+        const key = 'abner_pending_deletes';
+        let list = [];
+        try { list = JSON.parse(localStorage.getItem(key) || '[]'); } catch (_) {}
+        const listIds = new Set(list.map(t => t.id));
+        removed.forEach(t => {
+          if (!listIds.has(t.id)) {
+            list.push({
+              id: t.id,
+              title: t.title || '',
+              calendarEventId: t.calendarEventId || null,
+              tasksApiId: t.tasksApiId || null,
+              ts: Date.now(),
+            });
+          }
+        });
+        try { localStorage.setItem(key, JSON.stringify(list)); } catch (_) {}
+      }
+    }
+  } catch (e) {
+    console.warn('خطا در تشخیص حذف‌شده‌ها:', e);
+  }
+
   Object.entries(data).forEach(([k, v]) => {
     try {
       localStorage.setItem(k, typeof v === 'string' ? v : JSON.stringify(v));
@@ -132,7 +165,7 @@ async function uploadAll() {
     const user = getUser();
     if (!user) throw new Error('کاربر لاگین نیست');
     console.log('📤 آپلود به Drive:', Object.keys(local).length, 'کلید');
-    const payload = { version: 5, user: user.email, updatedAt: Date.now(), data: local };
+    const payload = { version: 6, user: user.email, updatedAt: Date.now(), data: local };
     const existing = await findFile(SYNC_FILE);
     await uploadFile(SYNC_FILE, payload, existing?.id);
     try { localStorage.setItem(LOCAL_TS_KEY, String(payload.updatedAt)); } catch (_) {}
@@ -171,8 +204,14 @@ async function downloadAll() {
     applyRemoteData(remote.data);
     try { localStorage.setItem(LOCAL_TS_KEY, String(remoteTs)); } catch (_) {}
     window.dispatchEvent(new CustomEvent('sync-complete', { detail: { direction: 'download' } }));
+
+    // 🆕 به tasks.js بگو تسک‌های حذف‌شده رو پردازش کنه
+    setTimeout(() => {
+      window.dispatchEvent(new CustomEvent('abner-check-pending-deletes'));
+    }, 500);
+
     setStatus('synced');
-    setTimeout(() => window.location.reload(), 500);
+    setTimeout(() => window.location.reload(), 800);
   } catch (e) {
     console.error('❌ خطا در دانلود:', e.message);
     setStatus(e.message.includes('توکن') ? 'auth-error' : 'error');

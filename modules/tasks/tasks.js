@@ -1,9 +1,10 @@
-/* ============ ماژول تسک و یادداشت - آبنر v14 (کامل با Sync مقاوم) ============ */
+/* ============ ماژول تسک و یادداشت - آبنر v15 (کامل) ============ */
 
 import { getToken, getUser, refreshToken } from '../auth/auth.js';
 
 const STORAGE_KEY = 'abner_tasks_v2';
 const SYNC_QUEUE_KEY = 'abner_sync_queue';
+const PENDING_DELETES_KEY = 'abner_pending_deletes';
 const GOOGLE_TASKS_LIST_ID = '@default';
 
 const DEFAULT_TAGS = [
@@ -41,7 +42,6 @@ const EMPTY_STATES = {
   },
 };
 
-/* ---------- State ---------- */
 let state = {
   tasks: [], notes: [], activeTab: 'tasks', hidden: false,
   showCompleted: false, sortBy: 'created',
@@ -72,6 +72,7 @@ let deletedBackup = null;
 let undoToastTimer = null;
 let syncQueue = [];
 let isProcessingQueue = false;
+let isProcessingDeletes = false;
 
 /* ============================================================
    تقویم جلالی
@@ -150,14 +151,10 @@ function restore() {
    Offline Sync Queue
 ============================================================ */
 function loadQueue() {
-  try {
-    syncQueue = JSON.parse(localStorage.getItem(SYNC_QUEUE_KEY) || '[]');
-  } catch (_) { syncQueue = []; }
+  try { syncQueue = JSON.parse(localStorage.getItem(SYNC_QUEUE_KEY) || '[]'); } catch (_) { syncQueue = []; }
 }
 function saveQueue() {
-  try {
-    localStorage.setItem(SYNC_QUEUE_KEY, JSON.stringify(syncQueue));
-  } catch (_) {}
+  try { localStorage.setItem(SYNC_QUEUE_KEY, JSON.stringify(syncQueue)); } catch (_) {}
 }
 function enqueue(action, taskSnapshot) {
   const item = {
@@ -182,22 +179,69 @@ function dispatchSyncStatus() {
 }
 
 /* ============================================================
-   🆕 Helper: درخواست با retry خودکار روی 401
+   Pending Deletes Queue
+============================================================ */
+function loadPendingDeletes() {
+  try { return JSON.parse(localStorage.getItem(PENDING_DELETES_KEY) || '[]'); } catch (_) { return []; }
+}
+function savePendingDeletes(list) {
+  try { localStorage.setItem(PENDING_DELETES_KEY, JSON.stringify(list)); } catch (_) {}
+}
+function addPendingDelete(task) {
+  if (!task || (!task.calendarEventId && !task.tasksApiId)) return;
+  const list = loadPendingDeletes();
+  if (list.find(t => t.id === task.id)) return;
+  list.push({
+    id: task.id,
+    title: task.title || '',
+    calendarEventId: task.calendarEventId || null,
+    tasksApiId: task.tasksApiId || null,
+    ts: Date.now(),
+  });
+  savePendingDeletes(list);
+}
+function removePendingDelete(id) {
+  savePendingDeletes(loadPendingDeletes().filter(t => t.id !== id));
+}
+
+export async function processPendingDeletes() {
+  if (isProcessingDeletes) return;
+  if (!navigator.onLine) return;
+  const list = loadPendingDeletes();
+  if (list.length === 0) return;
+
+  isProcessingDeletes = true;
+  console.log('🗑️ پردازش صف حذف:', list.length, 'مورد');
+
+  for (const item of list) {
+    try {
+      if (item.calendarEventId) {
+        await deleteTaskCalendarEvent({ calendarEventId: item.calendarEventId });
+      }
+      if (item.tasksApiId) {
+        await deleteTaskFromGoogleTasks({ tasksApiId: item.tasksApiId });
+      }
+      removePendingDelete(item.id);
+      console.log('  ✅ حذف شد:', item.title);
+    } catch (e) {
+      console.warn('  ⚠️ خطا:', item.id, e.message);
+    }
+  }
+  isProcessingDeletes = false;
+}
+
+/* ============================================================
+   Helper: درخواست با retry روی 401
 ============================================================ */
 async function fetchWithRetry(makeRequest) {
   let token = await getToken();
   if (!token) return { ok: false, status: 0, reason: 'no-token' };
 
   let res = await makeRequest(token);
-
   if (res.status === 401) {
-    // توکن منقضی شده → refresh
     const newToken = await refreshToken();
-    if (newToken) {
-      res = await makeRequest(newToken);
-    }
+    if (newToken) res = await makeRequest(newToken);
   }
-
   return res;
 }
 
@@ -266,7 +310,6 @@ async function syncTaskToCalendar(task) {
 
     let res = await fetchWithRetry(makeRequest);
 
-    // اگه event قبلاً پاک شده → دوباره بساز
     if (res.status === 404 && task.calendarEventId) {
       delete task.calendarEventId;
       persist();
@@ -365,7 +408,6 @@ async function deleteTaskFromGoogleTasks(task) {
 async function syncTaskEverywhere(task) {
   if (!task) return;
   if (!navigator.onLine) {
-    console.log('   ⚠️ آفلاین — به صف اضافه شد');
     enqueue('sync', task);
     return;
   }
@@ -373,26 +415,10 @@ async function syncTaskEverywhere(task) {
     syncTaskToCalendar(task),
     syncTaskToGoogleTasks(task),
   ]);
-  console.log('   نتایج سینک:', results.map(r =>
-    r.status === 'fulfilled' ? r.value : { rejected: r.reason?.message }
-  ));
   const hasFailure = results.some(r =>
     r.status === 'rejected' || (r.value && r.value.ok === false && r.value.reason !== 'skipped')
   );
   if (hasFailure) enqueue('sync', task);
-}
-
-async function deleteTaskEverywhere(task) {
-  if (!task) return;
-  if (!navigator.onLine) { enqueue('delete', task); return; }
-  const results = await Promise.allSettled([
-    deleteTaskCalendarEvent(task),
-    deleteTaskFromGoogleTasks(task),
-  ]);
-  const hasFailure = results.some(r =>
-    r.status === 'rejected' || (r.value && r.value.ok === false)
-  );
-  if (hasFailure) enqueue('delete', task);
 }
 
 async function processQueue() {
@@ -406,7 +432,8 @@ async function processQueue() {
   for (const item of items) {
     try {
       if (item.action === 'delete') {
-        await deleteTaskEverywhere(item.task);
+        await deleteTaskCalendarEvent(item.task);
+        await deleteTaskFromGoogleTasks(item.task);
       } else {
         const current = state.tasks.find(t => t.id === item.task.id);
         if (current) {
@@ -415,10 +442,8 @@ async function processQueue() {
             syncTaskToGoogleTasks(current),
           ]);
         } else {
-          await Promise.allSettled([
-            deleteTaskCalendarEvent(item.task),
-            deleteTaskFromGoogleTasks(item.task),
-          ]);
+          await deleteTaskCalendarEvent(item.task);
+          await deleteTaskFromGoogleTasks(item.task);
         }
       }
       syncQueue = syncQueue.filter(q => q.id !== item.id);
@@ -543,7 +568,7 @@ function showUndoToast(message, onUndo) {
     hideUndoToast();
     document.removeEventListener('keydown', ctrlZHandler);
     deletedBackup = null;
-  }, 16000);
+  }, 8000);
 }
 function hideUndoToast() {
   const existing = document.getElementById('abnerUndoToast');
@@ -705,6 +730,7 @@ function deleteTask(id) {
   if (idx === -1) return;
   const [removed] = state.tasks.splice(idx, 1);
   deletedBackup = { task: removed, index: idx };
+
   persist();
   render();
 
@@ -712,6 +738,7 @@ function deleteTask(id) {
     if (!deletedBackup) return;
     state.tasks.splice(deletedBackup.index, 0, deletedBackup.task);
     removeFromQueue(deletedBackup.task.id);
+    removePendingDelete(deletedBackup.task.id);
     deletedBackup = null;
     persist();
     render();
@@ -719,9 +746,10 @@ function deleteTask(id) {
 
   setTimeout(() => {
     if (!deletedBackup || deletedBackup.task.id !== removed.id) {
-      deleteTaskEverywhere(removed);
+      addPendingDelete(removed);
+      processPendingDeletes();
     }
-  }, 16500);
+  }, 8000);
 }
 
 function deleteNote(id) {
@@ -785,9 +813,8 @@ function submitNew() {
   updateToolbarState();
   persist(); render();
 
-    const lastTask = state.tasks[state.tasks.length - 1];
+  const lastTask = state.tasks[state.tasks.length - 1];
   if (lastTask && state.activeTab === 'tasks') {
-    console.log('🚀 شروع سینک برای:', lastTask.title, '| dueDate:', lastTask.dueDate, '| user:', getUser()?.email);
     syncTaskEverywhere(lastTask);
   }
 }
@@ -1608,8 +1635,8 @@ function submitEdit() {
   task.tags = [...editDraft.tags];
   task.recurring = editDraft.recurring;
   task.board = editDraft.board;
-  task.calendarEventId = editDraft.calendarEventId;   // 🆕
-  task.tasksApiId = editDraft.tasksApiId;             // 🆕
+  task.calendarEventId = editDraft.calendarEventId;
+  task.tasksApiId = editDraft.tasksApiId;
   task.updatedAt = Date.now();
 
   persist();
@@ -1830,37 +1857,37 @@ export function initTasks() {
 
   window.addEventListener('online', () => {
     console.log('🌐 آنلاین شد — پردازش صف سینک...');
-    setTimeout(processQueue, 1500);
+    setTimeout(() => { processQueue(); processPendingDeletes(); }, 1500);
   });
   window.addEventListener('offline', () => {
     console.log('📴 آفلاین شد');
     dispatchSyncStatus();
   });
   window.addEventListener('user-signed-in', () => {
-    setTimeout(processQueue, 2000);
+    setTimeout(() => { processQueue(); processPendingDeletes(); }, 2000);
+  });
+
+  // 🆕 تشخیص تسک‌های حذف‌شده از دستگاه دیگه
+  window.addEventListener('abner-removed-tasks', (e) => {
+    const removed = e.detail || [];
+    removed.forEach(t => addPendingDelete(t));
+    processPendingDeletes();
+  });
+
+  // 🆕 بعد از دانلود از Drive
+  window.addEventListener('abner-check-pending-deletes', () => {
+    processPendingDeletes();
   });
 
   if (navigator.onLine && getUser()) {
-    setTimeout(processQueue, 3000);
+    setTimeout(() => { processQueue(); processPendingDeletes(); }, 3000);
   }
+
+  // 🆕 هر ۳۰ ثانیه صف حذف رو پردازش کن
+  setInterval(() => {
+    if (navigator.onLine && getUser()) processPendingDeletes();
+  }, 30 * 1000);
 
   updateToolbarState();
   render();
-
-  // 🆕 Force re-sync همه تسک‌ها
-  window.addEventListener('force-resync-all', async () => {
-    console.log('🔄 شروع force resync همه تسک‌ها...');
-    for (const t of state.tasks) {
-      // پاک کردن ID های نامعتبر
-      delete t.calendarEventId;
-      delete t.tasksApiId;
-      if (t.dueDate) {
-        await syncTaskToCalendar(t);
-        await syncTaskToGoogleTasks(t);
-      }
-    }
-    persist();
-    render();
-    console.log('✅ Force resync تمام شد');
-  });
 }
