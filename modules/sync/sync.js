@@ -1,4 +1,4 @@
-/* ============ همگام‌سازی با گوگل درایو - آبنر (v6) ============ */
+/* ============ همگام‌سازی با گوگل درایو - آبنر (v7) ============ */
 
 import { getToken, getUser, refreshToken } from '../auth/auth.js';
 
@@ -115,9 +115,39 @@ function collectLocalData() {
   return result;
 }
 
-function applyRemoteData(data) {
-  // 🆕 تشخیص تسک‌های حذف‌شده از دستگاه دیگه
+/* 🆕 فیلتر تسک‌های pending-delete از داده Drive */
+function filterPendingDeletes(data) {
   try {
+    let pendingList = [];
+    try { pendingList = JSON.parse(localStorage.getItem('abner_pending_deletes') || '[]'); } catch (_) {}
+    const pendingIds = new Set(pendingList.map(t => t.id));
+
+    if (data.abner_tasks_v2 && pendingIds.size > 0) {
+      const taskData = typeof data.abner_tasks_v2 === 'string'
+        ? JSON.parse(data.abner_tasks_v2)
+        : data.abner_tasks_v2;
+
+      const before = (taskData.tasks || []).length;
+      taskData.tasks = (taskData.tasks || []).filter(t => !pendingIds.has(t.id));
+      const after = taskData.tasks.length;
+
+      if (before !== after) {
+        console.log(`🗑️ ${before - after} تسک pending از داده Drive فیلتر شد`);
+        data.abner_tasks_v2 = JSON.stringify(taskData);
+      }
+    }
+  } catch (e) {
+    console.warn('خطا در فیلتر pending:', e);
+  }
+  return data;
+}
+
+function applyRemoteData(data) {
+  try {
+    // 1) اول تسک‌های pending رو از داده Drive حذف کن
+    data = filterPendingDeletes(data);
+
+    // 2) تشخیص تسک‌های حذف‌شده از دستگاه دیگه
     const oldTasksRaw = localStorage.getItem('abner_tasks_v2');
     const newTasksRaw = data.abner_tasks_v2;
     if (oldTasksRaw && newTasksRaw) {
@@ -146,7 +176,7 @@ function applyRemoteData(data) {
       }
     }
   } catch (e) {
-    console.warn('خطا در تشخیص حذف‌شده‌ها:', e);
+    console.warn('خطا در پردازش حذف‌شده‌ها:', e);
   }
 
   Object.entries(data).forEach(([k, v]) => {
@@ -165,7 +195,7 @@ async function uploadAll() {
     const user = getUser();
     if (!user) throw new Error('کاربر لاگین نیست');
     console.log('📤 آپلود به Drive:', Object.keys(local).length, 'کلید');
-    const payload = { version: 6, user: user.email, updatedAt: Date.now(), data: local };
+    const payload = { version: 7, user: user.email, updatedAt: Date.now(), data: local };
     const existing = await findFile(SYNC_FILE);
     await uploadFile(SYNC_FILE, payload, existing?.id);
     try { localStorage.setItem(LOCAL_TS_KEY, String(payload.updatedAt)); } catch (_) {}
@@ -194,7 +224,14 @@ async function downloadAll() {
 
     console.log('📥 Drive ts:', remoteTs, '| Local ts:', localTs);
 
-    if (remoteTs <= localTs) {
+    // اگه صف pending خالیه و Drive جدید نیست، کاری نکن
+    let hasPending = false;
+    try {
+      const pending = JSON.parse(localStorage.getItem('abner_pending_deletes') || '[]');
+      hasPending = pending.length > 0;
+    } catch (_) {}
+
+    if (remoteTs <= localTs && !hasPending) {
       console.log('✅ داده لوکال جدیدتره');
       setStatus('synced');
       isSyncing = false;
@@ -205,7 +242,7 @@ async function downloadAll() {
     try { localStorage.setItem(LOCAL_TS_KEY, String(remoteTs)); } catch (_) {}
     window.dispatchEvent(new CustomEvent('sync-complete', { detail: { direction: 'download' } }));
 
-    // 🆕 به tasks.js بگو تسک‌های حذف‌شده رو پردازش کنه
+    // 🆕 بعد از دانلود، تسک‌های pending رو پردازش کن
     setTimeout(() => {
       window.dispatchEvent(new CustomEvent('abner-check-pending-deletes'));
     }, 500);
@@ -258,6 +295,13 @@ export async function initSync() {
   window.addEventListener('bookmarks-updated', () => scheduleSync(1500));
   window.addEventListener('online', () => setTimeout(syncNow, 500));
   window.addEventListener('offline', () => setStatus('offline'));
+
+  // 🆕 آپلود فوری (بدون تأخیر) — برای حذف/برگرداندن تسک
+  window.addEventListener('abner-urgent-upload', () => {
+    console.log('⚡ آپلود فوری به Drive');
+    if (syncTimer) { clearTimeout(syncTimer); syncTimer = null; }
+    uploadAll();
+  });
 
   setInterval(() => {
     if (navigator.onLine && getUser()) syncNow();

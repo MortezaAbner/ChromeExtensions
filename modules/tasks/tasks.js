@@ -738,22 +738,30 @@ function deleteTask(id) {
   const [removed] = state.tasks.splice(idx, 1);
   deletedBackup = { task: removed, index: idx };
 
-  // 🆕 بلافاصله در صف حذف ثبت کن (با مهلت Undo ۸ ثانیه)
+  // 1) ثبت فوری در صف حذف (با مهلت Undo ۸ ثانیه)
   addPendingDelete(removed);
 
+  // 2) ذخیره لوکال + signal به sync.js
   persist();
   render();
 
+  // 3) 🆕 آپلود فوری به Drive (بدون تأخیر)
+  window.dispatchEvent(new CustomEvent('abner-urgent-upload'));
+
+  // 4) Toast برگرداندن
   showUndoToast('تسک حذف شد!', () => {
     if (!deletedBackup) return;
     state.tasks.splice(deletedBackup.index, 0, deletedBackup.task);
     removeFromQueue(deletedBackup.task.id);
-    removePendingDelete(deletedBackup.task.id);
+    removePendingDelete(deletedBackup.task.id);   // از صف حذف → به گوگل نمیره
     deletedBackup = null;
     persist();
     render();
+    // 🆕 آپلود فوری بعد از برگرداندن
+    window.dispatchEvent(new CustomEvent('abner-urgent-upload'));
   });
 
+  // 5) بعد از ۸ ثانیه، از Google Tasks و Calendar حذف کن
   setTimeout(() => {
     if (!deletedBackup || deletedBackup.task.id !== removed.id) {
       processPendingDeletes();
