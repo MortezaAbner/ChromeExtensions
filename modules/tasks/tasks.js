@@ -1,19 +1,13 @@
-/* ============ ماژول تسک و یادداشت - آبنر v16 (کامل) ============ */
+/* ============ ماژول تسک — آبنر v18 ============ */
 
 import { getToken, getUser, refreshToken } from '../auth/auth.js';
-
-const STORAGE_KEY = 'abner_tasks_v2';
-const SYNC_QUEUE_KEY = 'abner_sync_queue';
-const PENDING_DELETES_KEY = 'abner_pending_deletes';
-const GOOGLE_TASKS_LIST_ID = '@default';
-const UNDO_DELAY_MS = 8000;
-
-const DEFAULT_TAGS = [
-  { id: 'personal', name: 'شخصی',  color: '#38bdf8' },
-  { id: 'work',     name: 'کار',   color: '#a78bfa' },
-  { id: 'secret',   name: 'سکرت',  color: '#f87171' },
-  { id: 'shopping', name: 'خرید',  color: '#fbbf24' },
-];
+import {
+  sharedState, loadAllState, saveAllState, getTags, findTag,
+  showUndoToast, hideUndoToast, addPendingDelete, removePendingDelete,
+  loadPendingDeletes, savePendingDeletes, getQueue, setQueue, loadQueue,
+  saveQueue, removeFromQueue, dispatchSyncStatus,
+  GOOGLE_TASKS_LIST_ID, UNDO_DELAY_MS,
+} from '../shared/state.js';
 
 const PRIORITIES = {
   high: { label: 'بالا',  color: '#ef4444' },
@@ -30,54 +24,7 @@ const BOARD_OPTIONS = {
 const FA_WEEKDAYS = ['شنبه','یکشنبه','دوشنبه','سه‌شنبه','چهارشنبه','پنجشنبه','جمعه'];
 const FA_MONTHS = ['فروردین','اردیبهشت','خرداد','تیر','مرداد','شهریور','مهر','آبان','آذر','دی','بهمن','اسفند'];
 
-const EMPTY_STATES = {
-  tasks: {
-    icon: `<svg viewBox="0 0 64 64" width="56" height="56" fill="none"><rect x="10" y="14" width="44" height="44" rx="10" fill="rgba(56,189,248,0.15)" stroke="#38bdf8" stroke-width="2"/><polyline points="22 36 30 44 44 28" stroke="#38bdf8" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>`,
-    title: 'هنوز تسکی ثبت نکردی!',
-    suggestions: ['کارهای روزانه', 'لیست خرید', 'یادآوری‌های پرداخت'],
-  },
-  notes: {
-    icon: `<svg viewBox="0 0 64 64" width="56" height="56" fill="none"><rect x="12" y="10" width="40" height="46" rx="6" fill="rgba(250,204,21,0.18)" stroke="#facc15" stroke-width="2"/><line x1="22" y1="24" x2="42" y2="24" stroke="#facc15" stroke-width="2.4" stroke-linecap="round"/><line x1="22" y1="32" x2="42" y2="32" stroke="#facc15" stroke-width="2.4" stroke-linecap="round"/><line x1="22" y1="40" x2="34" y2="40" stroke="#facc15" stroke-width="2.4" stroke-linecap="round"/></svg>`,
-    title: 'هنوز یادداشتی ثبت نکردی!',
-    suggestions: ['ژورنال روزانه', 'برنامه‌ریزی برای ماه جدید', 'نوشتن لیست اهداف'],
-  },
-};
-
-let state = {
-  tasks: [], notes: [], activeTab: 'tasks', hidden: false,
-  showCompleted: false, sortBy: 'created',
-  filter: { due: null, priority: null, tags: [] },
-  allTags: [],
-};
-
-let inputDraft = {
-  title: '', desc: '', dueDate: null, dueTime: null,
-  priority: null, tags: [], recurring: null, board: null,
-};
-
-let editDraft = null;
-let editTaskId = null;
-let isEditMode = false;
-
-function getActiveDraft() {
-  return (isEditMode && editDraft) ? editDraft : inputDraft;
-}
-
-let recurringDraft = { frequency: 'daily', interval: 1, weekDays: [], monthDays: [], months: [] };
-let dateView = { year: 0, month: 0 };
-let selectedDateInPicker = null;
-let timeDraft = { h: 12, m: 0 };
-let currentPopoverKind = null;
-
-let deletedBackup = null;
-let undoToastTimer = null;
-let syncQueue = [];
-let isProcessingQueue = false;
-let isProcessingDeletes = false;
-
-/* ============================================================
-   تقویم جلالی
-============================================================ */
+/* ============ تقویم جلالی ============ */
 function _div(a,b){return ~~(a/b);}
 function _mod(a,b){return a-~~(a/b)*b;}
 function _jalCal(jy){
@@ -126,124 +73,42 @@ function todayJalali() {
 }
 const toFa = n => String(n).replace(/\d/g, d => '۰۱۲۳۴۵۶۷۸۹'[d]);
 
-/* ============================================================
-   ذخیره / بازیابی
-============================================================ */
-function persist() {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({
-      tasks: state.tasks, notes: state.notes, allTags: state.allTags,
-    }));
-  } catch (_) {}
-  window.dispatchEvent(new CustomEvent('tasks-updated'));
-}
-function restore() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) { state.allTags = DEFAULT_TAGS.slice(); return; }
-    const data = JSON.parse(raw);
-    state.tasks = data.tasks || [];
-    state.notes = data.notes || [];
-    state.allTags = (data.allTags && data.allTags.length) ? data.allTags : DEFAULT_TAGS.slice();
-  } catch (_) { state.allTags = DEFAULT_TAGS.slice(); }
+/* ============ State داخلی تسک ============ */
+let state = {
+  activeTab: 'tasks',
+  hidden: false,
+  showCompleted: false,
+  sortBy: 'created',
+  filter: { due: null, priority: null, tags: [] },
+};
+
+let inputDraft = {
+  title: '', desc: '', dueDate: null, dueTime: null,
+  priority: null, tags: [], recurring: null, board: null,
+};
+let editDraft = null;
+let editTaskId = null;
+let isEditMode = false;
+
+function getActiveDraft() {
+  return (isEditMode && editDraft) ? editDraft : inputDraft;
 }
 
-/* ============================================================
-   Offline Sync Queue
-============================================================ */
-function loadQueue() {
-  try { syncQueue = JSON.parse(localStorage.getItem(SYNC_QUEUE_KEY) || '[]'); } catch (_) { syncQueue = []; }
-}
-function saveQueue() {
-  try { localStorage.setItem(SYNC_QUEUE_KEY, JSON.stringify(syncQueue)); } catch (_) {}
-}
-function enqueue(action, taskSnapshot) {
-  const item = {
-    id: 'q_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
-    action,
-    task: JSON.parse(JSON.stringify(taskSnapshot)),
-    ts: Date.now(),
-  };
-  syncQueue.push(item);
-  saveQueue();
-  dispatchSyncStatus();
-}
-function removeFromQueue(taskId) {
-  syncQueue = syncQueue.filter(q => q.task?.id !== taskId);
-  saveQueue();
-  dispatchSyncStatus();
-}
-function dispatchSyncStatus() {
-  window.dispatchEvent(new CustomEvent('abner-sync-status', {
-    detail: { pending: syncQueue.length, online: navigator.onLine }
-  }));
-}
+let recurringDraft = { frequency: 'daily', interval: 1, weekDays: [], monthDays: [], months: [] };
+let dateView = { year: 0, month: 0 };
+let selectedDateInPicker = null;
+let timeDraft = { h: 12, m: 0 };
+let currentPopoverKind = null;
+let deletedBackup = null;
+let isProcessingQueue = false;
+let isProcessingDeletes = false;
 
-/* ============================================================
-   Pending Deletes Queue (مقاوم به reload/قطع اینترنت)
-============================================================ */
-function loadPendingDeletes() {
-  try { return JSON.parse(localStorage.getItem(PENDING_DELETES_KEY) || '[]'); } catch (_) { return []; }
-}
-function savePendingDeletes(list) {
-  try { localStorage.setItem(PENDING_DELETES_KEY, JSON.stringify(list)); } catch (_) {}
-}
-function addPendingDelete(task) {
-  if (!task || (!task.calendarEventId && !task.tasksApiId)) return;
-  const list = loadPendingDeletes();
-  if (list.find(t => t.id === task.id)) return;
-  list.push({
-    id: task.id,
-    title: task.title || '',
-    calendarEventId: task.calendarEventId || null,
-    tasksApiId: task.tasksApiId || null,
-    ts: Date.now(),
-    processAfter: Date.now() + UNDO_DELAY_MS,
-  });
-  savePendingDeletes(list);
-}
-function removePendingDelete(id) {
-  savePendingDeletes(loadPendingDeletes().filter(t => t.id !== id));
-}
+const tasks = () => sharedState.tasks;
 
-export async function processPendingDeletes() {
-  if (isProcessingDeletes) return;
-  if (!navigator.onLine) return;
-  const list = loadPendingDeletes();
-  if (list.length === 0) return;
-
-  const now = Date.now();
-  // فقط آیتم‌هایی که مهلت Undo اونها گذشته
-  const ready = list.filter(item => !item.processAfter || item.processAfter <= now);
-  if (ready.length === 0) return;
-
-  isProcessingDeletes = true;
-  console.log('🗑️ پردازش صف حذف:', ready.length, 'مورد');
-
-  for (const item of ready) {
-    try {
-      if (item.calendarEventId) {
-        await deleteTaskCalendarEvent({ calendarEventId: item.calendarEventId });
-      }
-      if (item.tasksApiId) {
-        await deleteTaskFromGoogleTasks({ tasksApiId: item.tasksApiId });
-      }
-      removePendingDelete(item.id);
-      console.log('  ✅ حذف شد:', item.title);
-    } catch (e) {
-      console.warn('  ⚠️ خطا:', item.id, e.message);
-    }
-  }
-  isProcessingDeletes = false;
-}
-
-/* ============================================================
-   Helper: درخواست با retry روی 401
-============================================================ */
+/* ============ Helper: retry ============ */
 async function fetchWithRetry(makeRequest) {
   let token = await getToken();
   if (!token) return { ok: false, status: 0, reason: 'no-token' };
-
   let res = await makeRequest(token);
   if (res.status === 401) {
     const newToken = await refreshToken();
@@ -252,42 +117,30 @@ async function fetchWithRetry(makeRequest) {
   return res;
 }
 
-/* ============================================================
-   Google Calendar Sync
-============================================================ */
+/* ============ Sync تسک به Calendar ============ */
 async function syncTaskToCalendar(task) {
   if (!task || !task.dueDate) return { ok: true, skipped: true };
   const user = getUser();
   if (!user) return { ok: false, reason: 'no-user' };
-
   try {
     const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
     let event;
-
     if (task.dueTime) {
       const date = new Date(task.dueDate);
       const [hh, mm] = task.dueTime.split(':').map(Number);
       date.setHours(hh || 0, mm || 0, 0, 0);
       const endDate = new Date(date.getTime() + 30 * 60 * 1000);
-      event = {
-        summary: task.title,
-        description: task.description || '',
+      event = { summary: task.title, description: task.description || '',
         start: { dateTime: date.toISOString(), timeZone },
-        end:   { dateTime: endDate.toISOString(), timeZone },
-      };
+        end:   { dateTime: endDate.toISOString(), timeZone } };
     } else {
       const d = new Date(task.dueDate);
       const dateStr = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
       const nextDay = new Date(d); nextDay.setDate(nextDay.getDate() + 1);
       const nextDateStr = `${nextDay.getFullYear()}-${String(nextDay.getMonth()+1).padStart(2,'0')}-${String(nextDay.getDate()).padStart(2,'0')}`;
-      event = {
-        summary: task.title,
-        description: task.description || '',
-        start: { date: dateStr },
-        end:   { date: nextDateStr },
-      };
+      event = { summary: task.title, description: task.description || '',
+        start: { date: dateStr }, end: { date: nextDateStr } };
     }
-
     if (task.recurring) {
       const rec = task.recurring;
       const freqMap = { daily: 'DAILY', weekly: 'WEEKLY', monthly: 'MONTHLY', yearly: 'YEARLY' };
@@ -297,41 +150,28 @@ async function syncTaskToCalendar(task) {
         const dayMap = { 0: 'SA', 1: 'SU', 2: 'MO', 3: 'TU', 4: 'WE', 5: 'TH', 6: 'FR' };
         rrule += `;BYDAY=${rec.weekDays.map(d => dayMap[d]).join(',')}`;
       }
-      if (rec.monthDays && rec.monthDays.length) {
-        rrule += `;BYMONTHDAY=${rec.monthDays.join(',')}`;
-      }
+      if (rec.monthDays && rec.monthDays.length) rrule += `;BYMONTHDAY=${rec.monthDays.join(',')}`;
       event.recurrence = [rrule];
     }
-
     const makeRequest = (token) => {
       const url = task.calendarEventId
         ? `https://www.googleapis.com/calendar/v3/calendars/primary/events/${task.calendarEventId}`
         : 'https://www.googleapis.com/calendar/v3/calendars/primary/events';
       const method = task.calendarEventId ? 'PUT' : 'POST';
-      return fetch(url, {
-        method,
-        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify(event),
-      });
+      return fetch(url, { method, headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify(event) });
     };
-
     let res = await fetchWithRetry(makeRequest);
-
     if (res.status === 404 && task.calendarEventId) {
-      delete task.calendarEventId;
-      persist();
+      delete task.calendarEventId; saveAllState();
       res = await fetchWithRetry(makeRequest);
     }
-
     if (res.ok) {
       const data = await res.json();
-      if (data.id) { task.calendarEventId = data.id; persist(); }
+      if (data.id) { task.calendarEventId = data.id; saveAllState(); }
       return { ok: true };
     }
     return { ok: false, reason: 'http-' + res.status };
-  } catch (e) {
-    return { ok: false, reason: 'exception', error: e };
-  }
+  } catch (e) { return { ok: false, reason: 'exception', error: e }; }
 }
 
 async function deleteTaskCalendarEvent(task) {
@@ -346,18 +186,13 @@ async function deleteTaskCalendarEvent(task) {
   } catch (_) { return { ok: false }; }
 }
 
-/* ============================================================
-   Google Tasks Sync
-============================================================ */
 async function syncTaskToGoogleTasks(task) {
   if (!task) return { ok: false };
   const user = getUser();
   if (!user) return { ok: false, reason: 'no-user' };
-
   try {
     const taskBody = {
-      title: task.title,
-      notes: task.description || '',
+      title: task.title, notes: task.description || '',
       status: task.completed ? 'completed' : 'needsAction',
     };
     if (task.dueDate) {
@@ -365,36 +200,25 @@ async function syncTaskToGoogleTasks(task) {
       d.setUTCHours(0, 0, 0, 0);
       taskBody.due = d.toISOString();
     }
-
     const makeRequest = (token) => {
       const url = task.tasksApiId
         ? `https://tasks.googleapis.com/tasks/v1/lists/${GOOGLE_TASKS_LIST_ID}/tasks/${task.tasksApiId}`
         : `https://tasks.googleapis.com/tasks/v1/lists/${GOOGLE_TASKS_LIST_ID}/tasks`;
       const method = task.tasksApiId ? 'PATCH' : 'POST';
-      return fetch(url, {
-        method,
-        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify(taskBody),
-      });
+      return fetch(url, { method, headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify(taskBody) });
     };
-
     let res = await fetchWithRetry(makeRequest);
-
     if (res.status === 404 && task.tasksApiId) {
-      delete task.tasksApiId;
-      persist();
+      delete task.tasksApiId; saveAllState();
       res = await fetchWithRetry(makeRequest);
     }
-
     if (res.ok) {
       const data = await res.json();
-      if (data.id) { task.tasksApiId = data.id; persist(); }
+      if (data.id) { task.tasksApiId = data.id; saveAllState(); }
       return { ok: true };
     }
     return { ok: false, reason: 'http-' + res.status };
-  } catch (e) {
-    return { ok: false, reason: 'exception', error: e };
-  }
+  } catch (e) { return { ok: false, reason: 'exception', error: e }; }
 }
 
 async function deleteTaskFromGoogleTasks(task) {
@@ -409,63 +233,78 @@ async function deleteTaskFromGoogleTasks(task) {
   } catch (_) { return { ok: false }; }
 }
 
-/* ============================================================
-   Orchestrator
-============================================================ */
 async function syncTaskEverywhere(task) {
   if (!task) return;
   if (!navigator.onLine) {
     enqueue('sync', task);
     return;
   }
-  const results = await Promise.allSettled([
-    syncTaskToCalendar(task),
-    syncTaskToGoogleTasks(task),
-  ]);
+  const results = await Promise.allSettled([syncTaskToCalendar(task), syncTaskToGoogleTasks(task)]);
   const hasFailure = results.some(r =>
     r.status === 'rejected' || (r.value && r.value.ok === false && r.value.reason !== 'skipped')
   );
   if (hasFailure) enqueue('sync', task);
 }
 
+function enqueue(action, taskSnapshot) {
+  const q = getQueue();
+  q.push({
+    id: 'q_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+    action, task: JSON.parse(JSON.stringify(taskSnapshot)), ts: Date.now(),
+  });
+  setQueue(q);
+  saveQueue();
+  dispatchSyncStatus();
+}
+
 async function processQueue() {
   if (isProcessingQueue) return;
   if (!navigator.onLine) return;
-  if (syncQueue.length === 0) return;
-
+  const q = getQueue();
+  if (q.length === 0) return;
   isProcessingQueue = true;
-  const items = [...syncQueue];
-
+  const items = [...q];
   for (const item of items) {
     try {
       if (item.action === 'delete') {
         await deleteTaskCalendarEvent(item.task);
         await deleteTaskFromGoogleTasks(item.task);
       } else {
-        const current = state.tasks.find(t => t.id === item.task.id);
+        const current = tasks().find(t => t.id === item.task.id);
         if (current) {
-          await Promise.allSettled([
-            syncTaskToCalendar(current),
-            syncTaskToGoogleTasks(current),
-          ]);
+          await Promise.allSettled([syncTaskToCalendar(current), syncTaskToGoogleTasks(current)]);
         } else {
           await deleteTaskCalendarEvent(item.task);
           await deleteTaskFromGoogleTasks(item.task);
         }
       }
-      syncQueue = syncQueue.filter(q => q.id !== item.id);
-      saveQueue();
-      dispatchSyncStatus();
-    } catch (e) {
-      console.warn('Queue item failed:', e);
-    }
+      removeFromQueue(x => x.id === item.id);
+    } catch (e) { console.warn('Queue item failed:', e); }
   }
   isProcessingQueue = false;
 }
 
-/* ============================================================
-   فرمت‌دهی
-============================================================ */
+/* ============ Pending Deletes ============ */
+export async function processPendingDeletes() {
+  if (isProcessingDeletes) return;
+  if (!navigator.onLine) return;
+  const list = loadPendingDeletes();
+  if (list.length === 0) return;
+  const now = Date.now();
+  const ready = list.filter(item => !item.processAfter || item.processAfter <= now);
+  if (ready.length === 0) return;
+  isProcessingDeletes = true;
+  for (const item of ready) {
+    try {
+      if (item.calendarEventId) await deleteTaskCalendarEvent({ calendarEventId: item.calendarEventId });
+      if (item.tasksApiId) await deleteTaskFromGoogleTasks({ tasksApiId: item.tasksApiId });
+      removePendingDelete(item.id);
+    } catch (_) {}
+  }
+  isProcessingDeletes = false;
+}
+
+/* ============ فرمت‌دهی ============ */
 function formatDueDate(ts) {
   if (!ts) return '';
   const date = new Date(ts);
@@ -488,11 +327,8 @@ function formatRecurring(rec) {
 function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
-function findTag(id) { return state.allTags.find(t => t.id === id); }
 
-/* ============================================================
-   فیلتر و مرتب‌سازی
-============================================================ */
+/* ============ فیلتر و مرتب‌سازی ============ */
 function applyFilter(list) {
   const now = Date.now();
   const startOfToday = new Date(); startOfToday.setHours(0,0,0,0);
@@ -537,84 +373,27 @@ function applySort(list) {
   return sorted;
 }
 
-/* ============================================================
-   Undo Toast
-============================================================ */
-function showUndoToast(message, onUndo) {
-  hideUndoToast();
-  const toast = document.createElement('div');
-  toast.id = 'abnerUndoToast';
-  toast.className = 'abner-undo-toast';
-  toast.innerHTML = `
-    <span class="undo-toast-message">${message}</span>
-    <button type="button" class="undo-toast-action" id="undoToastBtn">
-      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
-      <span>بگرداندن</span>
-      <span class="undo-toast-key">CTRL + Z</span>
-    </button>
-  `;
-  document.body.appendChild(toast);
-  requestAnimationFrame(() => toast.classList.add('show'));
-
-  const doUndo = () => {
-    onUndo();
-    hideUndoToast();
-    document.removeEventListener('keydown', ctrlZHandler);
-  };
-  const ctrlZHandler = (e) => {
-    if ((e.ctrlKey || e.metaKey) && (e.key === 'z' || e.key === 'Z' || e.key === 'ض' || e.key === 'ظ')) {
-      e.preventDefault();
-      doUndo();
-    }
-  };
-  document.addEventListener('keydown', ctrlZHandler);
-  toast._ctrlZHandler = ctrlZHandler;
-  document.getElementById('undoToastBtn').onclick = doUndo;
-
-  undoToastTimer = setTimeout(() => {
-    hideUndoToast();
-    document.removeEventListener('keydown', ctrlZHandler);
-    deletedBackup = null;
-  }, UNDO_DELAY_MS);
-}
-function hideUndoToast() {
-  const existing = document.getElementById('abnerUndoToast');
-  if (existing) {
-    if (existing._ctrlZHandler) document.removeEventListener('keydown', existing._ctrlZHandler);
-    existing.classList.remove('show');
-    setTimeout(() => existing.remove(), 250);
-  }
-  if (undoToastTimer) { clearTimeout(undoToastTimer); undoToastTimer = null; }
-}
-
-/* ============================================================
-   رندر
-============================================================ */
-function render() {
+/* ============ رندر ============ */
+export function renderTasks() {
   const list = document.getElementById('tasksList');
   if (!list) return;
   list.classList.toggle('is-hidden', state.hidden);
-  const tab = state.activeTab;
-  const items = tab === 'tasks' ? state.tasks : state.notes;
-  let filtered = applyFilter(items);
-  if (tab === 'tasks' && !state.showCompleted) filtered = filtered.filter(t => !t.completed);
+  let filtered = applyFilter(tasks());
+  if (!state.showCompleted) filtered = filtered.filter(t => !t.completed);
   const sorted = applySort(filtered);
-  if (sorted.length === 0) { renderEmpty(list, tab); return; }
-  list.innerHTML = tab === 'tasks'
-    ? sorted.map(t => renderTaskItem(t)).join('')
-    : sorted.map(n => renderNoteItem(n)).join('');
-  attachItemEvents(list);
+  if (sorted.length === 0) { renderEmptyTasks(list); return; }
+  list.innerHTML = sorted.map(t => renderTaskItem(t)).join('');
+  attachTaskEvents(list);
 }
 
-function renderEmpty(list, tab) {
-  const e = EMPTY_STATES[tab];
+function renderEmptyTasks(list) {
   list.innerHTML = `
     <div class="task-empty-state">
-      <div class="tes-icon">${e.icon}</div>
-      <div class="tes-title">${e.title}</div>
+      <div class="tes-icon"><svg viewBox="0 0 64 64" width="56" height="56" fill="none"><rect x="10" y="14" width="44" height="44" rx="10" fill="rgba(56,189,248,0.15)" stroke="#38bdf8" stroke-width="2"/><polyline points="22 36 30 44 44 28" stroke="#38bdf8" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></div>
+      <div class="tes-title">هنوز تسکی ثبت نکردی!</div>
       <div class="tes-sub">موضوعات پیشنهادی:</div>
       <ul class="tes-suggestions">
-        ${e.suggestions.map(s => `<li data-suggest="${s}">• ${s}</li>`).join('')}
+        ${['کارهای روزانه', 'لیست خرید', 'یادآوری‌های پرداخت'].map(s => `<li data-suggest="${s}">• ${s}</li>`).join('')}
       </ul>
     </div>
   `;
@@ -679,126 +458,61 @@ function renderTaskItem(t) {
   `;
 }
 
-function renderNoteItem(n) {
-  return `
-    <div class="task-item note-item ${n.pinned ? 'pinned' : ''}" data-id="${n.id}">
-      <div class="ti-main">
-        <div class="ti-content">
-          <div class="ti-title">${escapeHtml(n.title || 'بدون عنوان')}</div>
-          ${n.content ? `<div class="ti-desc">${escapeHtml(n.content)}</div>` : ''}
-          <div class="ti-badges">
-            <span class="ti-badge due">
-              <svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-              ${formatDueDate(n.createdAt)}
-            </span>
-          </div>
-        </div>
-        <button class="ti-action" data-act="pin">
-          <svg viewBox="0 0 24 24" width="14" height="14" fill="${n.pinned ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1z"/></svg>
-        </button>
-        <button class="ti-action" data-act="delete">
-          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"/></svg>
-        </button>
-      </div>
-    </div>
-  `;
-}
-
-function attachItemEvents(list) {
+function attachTaskEvents(list) {
   list.querySelectorAll('.task-item').forEach(el => {
     const id = el.dataset.id;
     el.querySelectorAll('[data-act]').forEach(btn => {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
         const act = btn.dataset.act;
-        if (state.activeTab === 'tasks') {
-          if (act === 'toggle') toggleTask(id);
-          else if (act === 'delete') deleteTask(id);
-          else if (act === 'edit') openEditModal(id);
-          else if (act === 'clear-time') clearTaskTime(id);
-          else if (act === 'clear-date') clearTaskDate(id);
-        } else {
-          if (act === 'delete') deleteNote(id);
-          else if (act === 'pin') togglePin(id);
-        }
+        if (act === 'toggle') toggleTask(id);
+        else if (act === 'delete') deleteTask(id);
+        else if (act === 'edit') openEditModal(id);
+        else if (act === 'clear-time') clearTaskTime(id);
+        else if (act === 'clear-date') clearTaskDate(id);
       });
     });
   });
 }
 
 function toggleTask(id) {
-  const t = state.tasks.find(x => x.id === id); if (!t) return;
-  t.completed = !t.completed; persist(); render();
+  const t = tasks().find(x => x.id === id); if (!t) return;
+  t.completed = !t.completed; saveAllState(); renderTasks();
   syncTaskEverywhere(t);
 }
 
 function deleteTask(id) {
-  const idx = state.tasks.findIndex(x => x.id === id);
+  const idx = tasks().findIndex(x => x.id === id);
   if (idx === -1) return;
-  const [removed] = state.tasks.splice(idx, 1);
+  const [removed] = sharedState.tasks.splice(idx, 1);
   deletedBackup = { task: removed, index: idx };
-
-  // 1) ثبت فوری در صف حذف (با مهلت Undo ۸ ثانیه)
   addPendingDelete(removed);
-
-  // 2) ذخیره لوکال + signal به sync.js
-  persist();
-  render();
-
-  // 3) 🆕 آپلود فوری به Drive (بدون تأخیر)
+  saveAllState();
+  renderTasks();
   window.dispatchEvent(new CustomEvent('abner-urgent-upload'));
-
-  // 4) Toast برگرداندن
   showUndoToast('تسک حذف شد!', () => {
     if (!deletedBackup) return;
-    state.tasks.splice(deletedBackup.index, 0, deletedBackup.task);
-    removeFromQueue(deletedBackup.task.id);
-    removePendingDelete(deletedBackup.task.id);   // از صف حذف → به گوگل نمیره
+    sharedState.tasks.splice(deletedBackup.index, 0, deletedBackup.task);
+    removeFromQueue(q => q.task?.id === deletedBackup.task.id);
+    removePendingDelete(deletedBackup.task.id);
     deletedBackup = null;
-    persist();
-    render();
-    // 🆕 آپلود فوری بعد از برگرداندن
+    saveAllState(); renderTasks();
     window.dispatchEvent(new CustomEvent('abner-urgent-upload'));
   });
-
-  // 5) بعد از ۸ ثانیه، از Google Tasks و Calendar حذف کن
   setTimeout(() => {
-    if (!deletedBackup || deletedBackup.task.id !== removed.id) {
-      processPendingDeletes();
-    }
+    if (!deletedBackup || deletedBackup.task.id !== removed.id) processPendingDeletes();
   }, UNDO_DELAY_MS);
 }
 
-function deleteNote(id) {
-  const idx = state.notes.findIndex(x => x.id === id);
-  if (idx === -1) return;
-  const [removed] = state.notes.splice(idx, 1);
-  deletedBackup = { task: removed, index: idx, isNote: true };
-  persist();
-  render();
-
-  showUndoToast('یادداشت حذف شد!', () => {
-    if (!deletedBackup) return;
-    state.notes.splice(deletedBackup.index, 0, deletedBackup.task);
-    deletedBackup = null;
-    persist();
-    render();
-  });
-}
-
-function togglePin(id) {
-  const n = state.notes.find(x => x.id === id); if (!n) return;
-  n.pinned = !n.pinned; persist(); render();
-}
 function clearTaskTime(id) {
-  const t = state.tasks.find(x => x.id === id); if (!t) return;
-  t.dueTime = null; persist(); render();
+  const t = tasks().find(x => x.id === id); if (!t) return;
+  t.dueTime = null; saveAllState(); renderTasks();
   syncTaskEverywhere(t);
 }
 function clearTaskDate(id) {
-  const t = state.tasks.find(x => x.id === id); if (!t) return;
-  t.dueDate = null; persist(); render();
-  if (t.calendarEventId) { deleteTaskCalendarEvent(t); delete t.calendarEventId; persist(); }
+  const t = tasks().find(x => x.id === id); if (!t) return;
+  t.dueDate = null; saveAllState(); renderTasks();
+  if (t.calendarEventId) { deleteTaskCalendarEvent(t); delete t.calendarEventId; saveAllState(); }
   syncTaskToGoogleTasks(t);
 }
 
@@ -808,32 +522,20 @@ function submitNew() {
   const title = (titleEl?.value || '').trim();
   const desc = (descEl?.value || '').trim();
   if (!title) return;
-
-  if (state.activeTab === 'tasks') {
-    state.tasks.push({
-      id: 't_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
-      title, description: desc, completed: false, createdAt: Date.now(),
-      dueDate: inputDraft.dueDate, dueTime: inputDraft.dueTime,
-      priority: inputDraft.priority, tags: [...inputDraft.tags],
-      recurring: inputDraft.recurring, board: inputDraft.board,
-    });
-  } else {
-    state.notes.push({
-      id: 'n_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
-      title, content: desc, createdAt: Date.now(), updatedAt: Date.now(), pinned: false,
-    });
-  }
-
+  sharedState.tasks.push({
+    id: 't_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+    title, description: desc, completed: false, createdAt: Date.now(),
+    dueDate: inputDraft.dueDate, dueTime: inputDraft.dueTime,
+    priority: inputDraft.priority, tags: [...inputDraft.tags],
+    recurring: inputDraft.recurring, board: inputDraft.board,
+  });
   if (titleEl) titleEl.value = '';
   if (descEl) { descEl.value = ''; descEl.style.height = 'auto'; }
   inputDraft = { title:'', desc:'', dueDate:null, dueTime:null, priority:null, tags:[], recurring:null, board:null };
   updateToolbarState();
-  persist(); render();
-
-  const lastTask = state.tasks[state.tasks.length - 1];
-  if (lastTask && state.activeTab === 'tasks') {
-    syncTaskEverywhere(lastTask);
-  }
+  saveAllState(); renderTasks();
+  const lastTask = tasks()[tasks().length - 1];
+  if (lastTask) syncTaskEverywhere(lastTask);
 }
 
 function updateToolbarState() {
@@ -843,14 +545,6 @@ function updateToolbarState() {
     prioBtn.classList.toggle('active', !!d.priority);
     if (d.priority) prioBtn.style.color = PRIORITIES[d.priority]?.color || '';
     else prioBtn.style.color = '';
-  }
-  const boardBtn = document.getElementById('tnBoard');
-  if (boardBtn) {
-    boardBtn.classList.toggle('active', !!d.board);
-    const label = boardBtn.querySelector('.tn-label');
-    if (label) label.textContent = d.board ? BOARD_OPTIONS[d.board].label : 'بورد';
-    if (d.board) boardBtn.style.color = BOARD_OPTIONS[d.board]?.color || '';
-    else boardBtn.style.color = '';
   }
   document.getElementById('tnTime')?.classList.toggle('active', !!d.dueTime);
   document.getElementById('tnCalendar')?.classList.toggle('active', !!d.dueDate);
@@ -893,35 +587,135 @@ function updateEditToolbarState() {
   }
 }
 
-/* ============================================================
-   Popover
-============================================================ */
+/* ============ Edit Modal ============ */
+function openEditModal(taskId) {
+  const task = tasks().find(t => t.id === taskId);
+  if (!task) return;
+  editTaskId = taskId;
+  isEditMode = true;
+  editDraft = {
+    title: task.title || '', desc: task.description || '',
+    dueDate: task.dueDate || null, dueTime: task.dueTime || null,
+    priority: task.priority || null, tags: [...(task.tags || [])],
+    recurring: task.recurring ? { ...task.recurring } : null,
+    board: task.board || null,
+    calendarEventId: task.calendarEventId || null,
+    tasksApiId: task.tasksApiId || null,
+  };
+  closePopover();
+  let overlay = document.getElementById('editTaskOverlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'editTaskOverlay';
+    overlay.className = 'edit-task-overlay';
+    document.body.appendChild(overlay);
+  }
+  overlay.classList.remove('hidden');
+  overlay.onclick = (e) => { if (e.target === overlay) closeEditModal(); };
+  renderEditModal();
+  bindEditModalEvents();
+  updateEditToolbarState();
+  setTimeout(() => document.getElementById('editTaskTitle')?.focus(), 80);
+}
+function closeEditModal() {
+  document.getElementById('editTaskOverlay')?.classList.add('hidden');
+  closePopover();
+  closeRecurringModal();
+  isEditMode = false;
+  editDraft = null;
+  editTaskId = null;
+}
+function renderEditModal() {
+  const overlay = document.getElementById('editTaskOverlay');
+  if (!overlay || !editDraft) return;
+  overlay.innerHTML = `
+    <div class="edit-task-modal">
+      <button type="button" class="edit-task-close" id="editTaskClose">×</button>
+      <h3 class="edit-task-title">ویرایش تسک</h3>
+      <div class="edit-task-inputs">
+        <input type="text" id="editTaskTitle" class="edit-task-title-input" placeholder="عنوان تسک" value="${escapeHtml(editDraft.title)}">
+        <textarea id="editTaskDesc" class="edit-task-desc-input" placeholder="توضیحات..." rows="3">${escapeHtml(editDraft.desc)}</textarea>
+      </div>
+      <div class="edit-task-toolbar">
+        <button type="button" class="tn-icon" id="editRecurring"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg><span class="tn-label">تکرار</span></button>
+        <button type="button" class="tn-icon" id="editBoard"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="18" rx="1.5"/><rect x="14" y="3" width="7" height="10" rx="1.5"/></svg><span class="tn-label">بورد</span></button>
+        <button type="button" class="tn-icon" id="editPriority"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg><span class="tn-label">اولویت</span></button>
+        <button type="button" class="tn-icon" id="editTime"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span class="tn-label">ساعت</span></button>
+        <button type="button" class="tn-icon" id="editCalendar"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span class="tn-label">سررسید</span></button>
+        <button type="button" class="tn-icon" id="editTag"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg><span class="tn-label">برچسب‌ها</span></button>
+      </div>
+      <div class="edit-task-actions">
+        <button type="button" class="edit-task-btn edit-task-btn-delete" id="editTaskDelete">حذف</button>
+        <button type="button" class="edit-task-btn edit-task-btn-save" id="editTaskSave">ویرایش تسک</button>
+      </div>
+    </div>`;
+}
+function bindEditModalEvents() {
+  document.getElementById('editTaskClose')?.addEventListener('click', closeEditModal);
+  document.getElementById('editRecurring')?.addEventListener('click', (e) => { e.stopPropagation(); openPopover('recurring', e.currentTarget); });
+  document.getElementById('editBoard')?.addEventListener('click', (e) => { e.stopPropagation(); openPopover('board', e.currentTarget); });
+  document.getElementById('editPriority')?.addEventListener('click', (e) => { e.stopPropagation(); openPopover('priority', e.currentTarget); });
+  document.getElementById('editTime')?.addEventListener('click', (e) => { e.stopPropagation(); openPopover('time', e.currentTarget); });
+  document.getElementById('editCalendar')?.addEventListener('click', (e) => { e.stopPropagation(); openPopover('date', e.currentTarget); });
+  document.getElementById('editTag')?.addEventListener('click', (e) => { e.stopPropagation(); openPopover('tag', e.currentTarget); });
+  document.getElementById('editTaskDelete')?.addEventListener('click', () => {
+    if (!editTaskId) return;
+    const id = editTaskId;
+    closeEditModal();
+    deleteTask(id);
+  });
+  document.getElementById('editTaskSave')?.addEventListener('click', submitEdit);
+}
+function submitEdit() {
+  const task = tasks().find(t => t.id === editTaskId);
+  if (!task || !editDraft) return;
+  const titleEl = document.getElementById('editTaskTitle');
+  const descEl = document.getElementById('editTaskDesc');
+  const title = (titleEl?.value || '').trim();
+  const desc = (descEl?.value || '').trim();
+  if (!title) { titleEl?.focus(); return; }
+  task.title = title;
+  task.description = desc;
+  task.dueDate = editDraft.dueDate;
+  task.dueTime = editDraft.dueTime;
+  task.priority = editDraft.priority;
+  task.tags = [...editDraft.tags];
+  task.recurring = editDraft.recurring;
+  task.board = editDraft.board;
+  task.calendarEventId = editDraft.calendarEventId;
+  task.tasksApiId = editDraft.tasksApiId;
+  task.updatedAt = Date.now();
+  saveAllState();
+  closeEditModal();
+  renderTasks();
+  syncTaskEverywhere(task);
+  if (!task.dueDate && task.calendarEventId) {
+    deleteTaskCalendarEvent(task);
+    delete task.calendarEventId;
+    saveAllState();
+  }
+}
+
+/* ============ Popovers ============ */
 function closePopover() {
   document.querySelectorAll('.tasks-inline-popover').forEach(el => el.remove());
   currentPopoverKind = null;
 }
-
 function positionPopover(pop, triggerOrId) {
-  const trigger = typeof triggerOrId === 'string'
-    ? document.getElementById(triggerOrId)
-    : triggerOrId;
+  const trigger = typeof triggerOrId === 'string' ? document.getElementById(triggerOrId) : triggerOrId;
   if (!trigger) return;
-
   pop.style.visibility = 'hidden';
   pop.style.position = 'fixed';
   pop.style.top = '-9999px';
   pop.style.left = '-9999px';
   void pop.offsetHeight;
-
   const tRect = trigger.getBoundingClientRect();
   const pRect = pop.getBoundingClientRect();
   const pW = pRect.width, pH = pRect.height;
   const vpH = window.innerHeight, vpW = window.innerWidth;
-
   let left = tRect.left + (tRect.width / 2) - (pW / 2);
   if (left < 10) left = 10;
   if (left + pW > vpW - 10) left = vpW - pW - 10;
-
   let top = tRect.top - pH - 10;
   if (top < 10) {
     const spaceBelow = vpH - tRect.bottom - 10;
@@ -930,67 +724,45 @@ function positionPopover(pop, triggerOrId) {
   }
   if (top + pH > vpH - 10) top = vpH - pH - 10;
   if (top < 10) top = 10;
-
   pop.style.top = top + 'px';
   pop.style.left = left + 'px';
   pop.style.visibility = 'visible';
 }
-
 function openPopover(kind, triggerEl) {
   const triggerIdMap = {
-    'priority':  isEditMode ? 'editPriority' : 'tnPriority',
-    'board':     isEditMode ? 'editBoard' : 'tnBoard',
-    'tag':       isEditMode ? 'editTag' : 'tnTag',
-    'time':      isEditMode ? 'editTime' : 'tnTime',
-    'date':      isEditMode ? 'editCalendar' : 'tnCalendar',
+    'priority': isEditMode ? 'editPriority' : 'tnPriority',
+    'board': isEditMode ? 'editBoard' : 'tnBoard',
+    'tag': isEditMode ? 'editTag' : 'tnTag',
+    'time': isEditMode ? 'editTime' : 'tnTime',
+    'date': isEditMode ? 'editCalendar' : 'tnCalendar',
     'recurring': isEditMode ? 'editRecurring' : 'tnRecurring',
   };
   const trigger = triggerEl || document.getElementById(triggerIdMap[kind]);
-
   if (kind === 'recurring') { closePopover(); openRecurringModal(); return; }
   if (kind === 'time') { closePopover(); openTimePicker(trigger); return; }
   if (kind === 'date') { closePopover(); openDatePicker(trigger); return; }
-
   if (currentPopoverKind === kind) { closePopover(); return; }
   closePopover();
   currentPopoverKind = kind;
-
   const pop = document.createElement('div');
   pop.className = 'tasks-inline-popover';
   pop.setAttribute('data-kind', kind);
-
   if (kind === 'priority') {
     const d = getActiveDraft();
     pop.innerHTML = `
       <div class="ip-title">اولویت</div>
       <div class="ip-list">
-        <button class="ip-item ${!d.priority ? 'active' : ''}" data-prio="none">
-          <span class="ip-dot" style="background:#94a3b8"></span><span>بدون اولویت</span>
-        </button>
-        ${Object.entries(PRIORITIES).map(([k,v]) => `
-          <button class="ip-item ${d.priority===k?'active':''}" data-prio="${k}">
-            <span class="ip-dot" style="background:${v.color}"></span><span>${v.label}</span>
-          </button>
-        `).join('')}
+        <button class="ip-item ${!d.priority ? 'active' : ''}" data-prio="none"><span class="ip-dot" style="background:#94a3b8"></span><span>بدون اولویت</span></button>
+        ${Object.entries(PRIORITIES).map(([k,v]) => `<button class="ip-item ${d.priority===k?'active':''}" data-prio="${k}"><span class="ip-dot" style="background:${v.color}"></span><span>${v.label}</span></button>`).join('')}
       </div>`;
   } else if (kind === 'board') {
     const d = getActiveDraft();
-    pop.innerHTML = `
-      <div class="ip-title">بورد</div>
-      <div class="ip-list">
-        ${Object.entries(BOARD_OPTIONS).map(([k,v]) => `
-          <button class="ip-item ${d.board===k?'active':''}" data-board="${k}">
-            <span class="ip-dot" style="background:${v.color}"></span><span>${v.label}</span>
-          </button>
-        `).join('')}
-      </div>`;
+    pop.innerHTML = `<div class="ip-title">بورد</div><div class="ip-list">${Object.entries(BOARD_OPTIONS).map(([k,v]) => `<button class="ip-item ${d.board===k?'active':''}" data-board="${k}"><span class="ip-dot" style="background:${v.color}"></span><span>${v.label}</span></button>`).join('')}</div>`;
   } else if (kind === 'tag') {
     pop.innerHTML = renderTagPopoverHTML();
   }
-
   document.body.appendChild(pop);
   positionPopover(pop, trigger);
-
   if (kind === 'priority') {
     pop.querySelectorAll('[data-prio]').forEach(b => {
       b.addEventListener('click', (e) => {
@@ -1014,23 +786,19 @@ function openPopover(kind, triggerEl) {
     bindTagPopover(pop);
   }
 }
-
-/* ============================================================
-   Tag Popover
-============================================================ */
 function renderTagPopoverHTML() {
   const d = getActiveDraft();
   return `
     <div class="ip-title">برچسب‌ها</div>
     <div class="ip-tag-list">
-      ${state.allTags.map(t => `
+      ${getTags().map(t => `
         <div class="ip-tag-row ${d.tags.includes(t.id) ? 'active' : ''}" data-tag-id="${t.id}">
           <button type="button" class="ip-tag-del" data-tag-del="${t.id}" title="حذف">
             <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"/></svg>
           </button>
           <span class="ip-tag-name">${escapeHtml(t.name)}</span>
           <span class="ip-tag-icon" style="background:${t.color}">
-            <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+            <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="#fff" stroke-width="2.4"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
           </span>
         </div>
       `).join('')}
@@ -1039,10 +807,9 @@ function renderTagPopoverHTML() {
       <span class="ip-tag-add-icon">
         <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       </span>
-      <input type="text" class="ip-tag-add-input" id="ipTagInput" placeholder="افزودن برچسب جدید" autocomplete="off">
+      <input type="text" class="ip-tag-add-input" id="ipTagInput" placeholder="افزودن برچسب جدید">
     </div>`;
 }
-
 function bindTagPopover(pop) {
   pop.querySelectorAll('.ip-tag-row').forEach(row => {
     row.addEventListener('click', (e) => {
@@ -1059,11 +826,12 @@ function bindTagPopover(pop) {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
       const id = btn.dataset.tagDel;
-      state.allTags = state.allTags.filter(t => t.id !== id);
+      sharedState.allTags = getTags().filter(t => t.id !== id);
       getActiveDraft().tags = getActiveDraft().tags.filter(t => t !== id);
-      state.tasks.forEach(t => { if (t.tags) t.tags = t.tags.filter(x => x !== id); });
+      sharedState.tasks.forEach(t => { if (t.tags) t.tags = t.tags.filter(x => x !== id); });
+      sharedState.notes.forEach(t => { if (t.tags) t.tags = t.tags.filter(x => x !== id); });
       state.filter.tags = state.filter.tags.filter(x => x !== id);
-      persist(); render();
+      saveAllState(); renderTasks();
       pop.innerHTML = renderTagPopoverHTML();
       bindTagPopover(pop);
       pop.querySelector('#ipTagInput')?.focus();
@@ -1076,26 +844,23 @@ function bindTagPopover(pop) {
   });
   input?.focus();
 }
-
 function addNewTag(pop) {
   const input = pop.querySelector('#ipTagInput');
   const name = input?.value.trim();
   if (!name) return;
   const palette = ['#38bdf8','#a78bfa','#f87171','#fbbf24','#22c55e','#f472b6','#60a5fa','#facc15','#fb923c'];
   const id = 'tag_' + Date.now() + '_' + Math.random().toString(36).slice(2, 5);
-  const color = palette[state.allTags.length % palette.length];
-  state.allTags.push({ id, name, color });
+  const color = palette[getTags().length % palette.length];
+  getTags().push({ id, name, color });
   getActiveDraft().tags.push(id);
-  persist();
+  saveAllState();
   if (isEditMode) updateEditToolbarState(); else updateToolbarState();
   pop.innerHTML = renderTagPopoverHTML();
   bindTagPopover(pop);
   pop.querySelector('#ipTagInput')?.focus();
 }
 
-/* ============================================================
-   Time Picker
-============================================================ */
+/* ============ Time Picker ============ */
 function openTimePicker(triggerEl) {
   const d = getActiveDraft();
   if (d.dueTime) {
@@ -1107,68 +872,33 @@ function openTimePicker(triggerEl) {
   }
   const trigger = triggerEl || document.getElementById(isEditMode ? 'editTime' : 'tnTime');
   if (!trigger) return;
-
   const pop = document.createElement('div');
   pop.className = 'tasks-inline-popover time-picker-popover';
-
-  const hoursHTML = Array.from({length: 24}, (_, i) =>
-    `<div class="tp-item ${i === timeDraft.h ? 'active' : ''}" data-h="${i}">${toFa(String(i).padStart(2,'0'))}</div>`
-  ).join('');
-  const minsHTML = Array.from({length: 60}, (_, i) =>
-    `<div class="tp-item ${i === timeDraft.m ? 'active' : ''}" data-m="${i}">${toFa(String(i).padStart(2,'0'))}</div>`
-  ).join('');
-
+  const hoursHTML = Array.from({length: 24}, (_, i) => `<div class="tp-item ${i === timeDraft.h ? 'active' : ''}" data-h="${i}">${toFa(String(i).padStart(2,'0'))}</div>`).join('');
+  const minsHTML = Array.from({length: 60}, (_, i) => `<div class="tp-item ${i === timeDraft.m ? 'active' : ''}" data-m="${i}">${toFa(String(i).padStart(2,'0'))}</div>`).join('');
   pop.innerHTML = `
     <div class="tp-labels"><div class="tp-label">ساعت</div><div class="tp-label">دقیقه</div></div>
     <div class="tp-cols">
       <div class="tp-col" id="tpHours"><div class="tp-scroll">${hoursHTML}</div></div>
       <div class="tp-col" id="tpMins"><div class="tp-scroll">${minsHTML}</div></div>
     </div>
-    <div class="tp-actions">
-      <button class="tp-confirm" id="tpConfirm">
-        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-        تایید
-      </button>
-    </div>
+    <div class="tp-actions"><button class="tp-confirm" id="tpConfirm">تایید</button></div>
     ${d.dueTime ? `<button class="tp-clear" id="tpClear">حذف ساعت</button>` : ''}`;
-
   document.body.appendChild(pop);
   positionPopover(pop, trigger);
   bindTimePicker();
 }
-
 function bindTimePicker() {
   const pop = document.querySelector('.time-picker-popover');
   if (!pop) return;
   const hoursCol = pop.querySelector('#tpHours');
   const minsCol = pop.querySelector('#tpMins');
-
   setTimeout(() => {
     const hA = hoursCol.querySelector('.tp-item.active');
     const mA = minsCol.querySelector('.tp-item.active');
     if (hA) hoursCol.scrollTop = hA.offsetTop - hoursCol.clientHeight / 2 + hA.offsetHeight / 2;
     if (mA) minsCol.scrollTop = mA.offsetTop - minsCol.clientHeight / 2 + mA.offsetHeight / 2;
   }, 30);
-
-  function attachWheel(col, unit) {
-    col.addEventListener('wheel', (e) => {
-      e.preventDefault();
-      const items = Array.from(col.querySelectorAll('.tp-item'));
-      const currentIdx = items.findIndex(x => x.classList.contains('active'));
-      let next = currentIdx + (e.deltaY > 0 ? 1 : -1);
-      if (next < 0) next = 0;
-      if (next >= items.length) next = items.length - 1;
-      if (next === currentIdx) return;
-      items[currentIdx]?.classList.remove('active');
-      items[next].classList.add('active');
-      if (unit === 'h') timeDraft.h = +items[next].dataset.h;
-      if (unit === 'm') timeDraft.m = +items[next].dataset.m;
-      col.scrollTop = items[next].offsetTop - col.clientHeight / 2 + items[next].offsetHeight / 2;
-    }, { passive: false });
-  }
-  attachWheel(hoursCol, 'h');
-  attachWheel(minsCol, 'm');
-
   hoursCol.querySelectorAll('.tp-item').forEach(it => {
     it.addEventListener('click', () => {
       hoursCol.querySelectorAll('.tp-item').forEach(x => x.classList.remove('active'));
@@ -1185,7 +915,6 @@ function bindTimePicker() {
       minsCol.scrollTop = it.offsetTop - minsCol.clientHeight / 2 + it.offsetHeight / 2;
     });
   });
-
   pop.querySelector('#tpConfirm')?.addEventListener('click', (e) => {
     e.stopPropagation();
     getActiveDraft().dueTime = `${String(timeDraft.h).padStart(2,'0')}:${String(timeDraft.m).padStart(2,'0')}`;
@@ -1200,9 +929,7 @@ function bindTimePicker() {
   });
 }
 
-/* ============================================================
-   Date Picker
-============================================================ */
+/* ============ Date Picker ============ */
 function openDatePicker(triggerEl) {
   const d = getActiveDraft();
   const today = todayJalali();
@@ -1218,14 +945,12 @@ function openDatePicker(triggerEl) {
   const trigger = triggerEl || document.getElementById(isEditMode ? 'editCalendar' : 'tnCalendar');
   if (!trigger) return;
   document.querySelectorAll('.date-picker-popover').forEach(el => el.remove());
-
   const pop = document.createElement('div');
   pop.className = 'tasks-inline-popover date-picker-popover';
   document.body.appendChild(pop);
   renderDatePicker();
   positionPopover(pop, trigger);
 }
-
 function renderDatePicker() {
   const pop = document.querySelector('.date-picker-popover');
   if (!pop) return;
@@ -1236,54 +961,39 @@ function renderDatePicker() {
   const firstDate = new Date(firstGreg.gy, firstGreg.gm - 1, firstGreg.gd);
   const jsDay = firstDate.getDay();
   const persianWeekday = (jsDay + 1) % 7;
-
   let cells = '';
   for (let i = 0; i < persianWeekday; i++) cells += `<div class="dp-cell dp-empty"></div>`;
   for (let day = 1; day <= daysInMonth; day++) {
     const isToday = (today.y === dateView.year && today.m === dateView.month && today.d === day);
-    const isSelected = selectedDateInPicker &&
-      selectedDateInPicker.y === dateView.year &&
-      selectedDateInPicker.m === dateView.month &&
-      selectedDateInPicker.d === day;
+    const isSelected = selectedDateInPicker && selectedDateInPicker.y === dateView.year && selectedDateInPicker.m === dateView.month && selectedDateInPicker.d === day;
     const cls = 'dp-cell' + (isToday ? ' dp-today' : '') + (isSelected ? ' dp-selected' : '');
     cells += `<button type="button" class="${cls}" data-d="${day}">${toFa(day)}</button>`;
   }
-
   pop.innerHTML = `
     <div class="dp-header">
-      <button class="dp-nav" id="dpPrev" title="ماه قبل">
-        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-      </button>
+      <button class="dp-nav" id="dpPrev"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="9 18 15 12 9 6"/></svg></button>
       <div class="dp-title">${FA_MONTHS[dateView.month - 1]} ${toFa(dateView.year)}</div>
-      <button class="dp-nav" id="dpNext" title="ماه بعد">
-        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-      </button>
+      <button class="dp-nav" id="dpNext"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="15 18 9 12 15 6"/></svg></button>
     </div>
     <div class="dp-weekdays">${FA_WEEKDAYS.map(w => `<div class="dp-wd">${w}</div>`).join('')}</div>
     <div class="dp-grid">${cells}</div>
     <div class="dp-actions">
       <button class="dp-btn dp-btn-today" id="dpToday">برو به امروز</button>
       ${d.dueDate ? `<button class="dp-btn dp-btn-clear" id="dpClear">حذف تاریخ</button>` : ''}
-      <button class="dp-btn dp-btn-confirm" id="dpConfirm">
-        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-        تایید
-      </button>
+      <button class="dp-btn dp-btn-confirm" id="dpConfirm">تایید</button>
     </div>`;
   bindDatePicker();
 }
-
 function bindDatePicker() {
   const pop = document.querySelector('.date-picker-popover');
   if (!pop) return;
   pop.querySelector('#dpNext')?.addEventListener('click', (e) => {
-    e.stopPropagation();
-    dateView.month++;
+    e.stopPropagation(); dateView.month++;
     if (dateView.month > 12) { dateView.month = 1; dateView.year++; }
     renderDatePicker();
   });
   pop.querySelector('#dpPrev')?.addEventListener('click', (e) => {
-    e.stopPropagation();
-    dateView.month--;
+    e.stopPropagation(); dateView.month--;
     if (dateView.month < 1) { dateView.month = 12; dateView.year--; }
     renderDatePicker();
   });
@@ -1319,9 +1029,7 @@ function bindDatePicker() {
   });
 }
 
-/* ============================================================
-   Recurring Modal
-============================================================ */
+/* ============ Recurring ============ */
 function openRecurringModal() {
   const d = getActiveDraft();
   if (d.recurring) {
@@ -1347,18 +1055,15 @@ function openRecurringModal() {
   renderRecurringModal();
   overlay.onclick = (e) => { if (e.target === overlay) closeRecurringModal(); };
 }
-
 function closeRecurringModal() {
   document.getElementById('recurringOverlay')?.classList.add('hidden');
   document.getElementById('rdMenu')?.classList.add('hidden');
 }
-
 function renderRecurringModal() {
   const overlay = document.getElementById('recurringOverlay');
   if (!overlay) return;
   const freqLabels = { daily: 'روز', weekly: 'هفته', monthly: 'ماه', yearly: 'سال' };
   const hasRecurring = !!getActiveDraft().recurring;
-
   overlay.innerHTML = `
     <div class="recurring-modal">
       <h3 class="recurring-title">تکرار</h3>
@@ -1372,71 +1077,29 @@ function renderRecurringModal() {
         <div class="recurring-dropdown">
           <button type="button" class="rd-trigger" id="rdTrigger">
             <span id="rdTriggerText">${freqLabels[recurringDraft.frequency]}</span>
-            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
           </button>
         </div>
       </div>
       <div class="recurring-divider"></div>
-      ${recurringDraft.frequency === 'weekly' ? `
-        <div class="recurring-row recurring-row-col">
-          <span class="recurring-label">چه روزهایی؟</span>
-          <div class="recur-weekdays">
-            ${FA_WEEKDAYS.map((label, id) => `
-              <button type="button" class="recur-pill recur-pill-day ${recurringDraft.weekDays.includes(id) ? 'active' : ''}" data-wday="${id}">${label}</button>
-            `).join('')}
-          </div>
-        </div>` : ''}
-      ${recurringDraft.frequency === 'monthly' ? `
-        <div class="recurring-row recurring-row-col">
-          <span class="recurring-label">چه روزهایی از ماه؟</span>
-          <div class="recur-days-grid">
-            ${Array.from({length: 31}, (_, i) => i + 1).map(d => `
-              <button type="button" class="recur-pill recur-pill-num ${recurringDraft.monthDays.includes(d) ? 'active' : ''}" data-mday="${d}">${toFa(d)}</button>
-            `).join('')}
-          </div>
-        </div>` : ''}
+      ${recurringDraft.frequency === 'weekly' ? `<div class="recurring-row recurring-row-col"><span class="recurring-label">چه روزهایی؟</span><div class="recur-weekdays">${FA_WEEKDAYS.map((label, id) => `<button type="button" class="recur-pill recur-pill-day ${recurringDraft.weekDays.includes(id) ? 'active' : ''}" data-wday="${id}">${label}</button>`).join('')}</div></div>` : ''}
+      ${recurringDraft.frequency === 'monthly' ? `<div class="recurring-row recurring-row-col"><span class="recurring-label">چه روزهایی از ماه؟</span><div class="recur-days-grid">${Array.from({length: 31}, (_, i) => i + 1).map(d => `<button type="button" class="recur-pill recur-pill-num ${recurringDraft.monthDays.includes(d) ? 'active' : ''}" data-mday="${d}">${toFa(d)}</button>`).join('')}</div></div>` : ''}
       ${recurringDraft.frequency === 'yearly' ? `
-        <div class="recurring-row recurring-row-col">
-          <span class="recurring-label">چه ماه‌هایی؟</span>
-          <div class="recur-months-grid">
-            ${FA_MONTHS.map((m, i) => `
-              <button type="button" class="recur-pill recur-pill-month ${recurringDraft.months.includes(i) ? 'active' : ''}" data-month="${i}">${m}</button>
-            `).join('')}
-          </div>
-        </div>
-        <div class="recurring-row recurring-row-col">
-          <span class="recurring-label">چه روزهایی از ماه؟</span>
-          <div class="recur-days-grid">
-            ${Array.from({length: 31}, (_, i) => i + 1).map(d => `
-              <button type="button" class="recur-pill recur-pill-num ${recurringDraft.monthDays.includes(d) ? 'active' : ''}" data-mday="${d}">${toFa(d)}</button>
-            `).join('')}
-          </div>
-        </div>` : ''}
+        <div class="recurring-row recurring-row-col"><span class="recurring-label">چه ماه‌هایی؟</span><div class="recur-months-grid">${FA_MONTHS.map((m, i) => `<button type="button" class="recur-pill recur-pill-month ${recurringDraft.months.includes(i) ? 'active' : ''}" data-month="${i}">${m}</button>`).join('')}</div></div>
+        <div class="recurring-row recurring-row-col"><span class="recurring-label">چه روزهایی از ماه؟</span><div class="recur-days-grid">${Array.from({length: 31}, (_, i) => i + 1).map(d => `<button type="button" class="recur-pill recur-pill-num ${recurringDraft.monthDays.includes(d) ? 'active' : ''}" data-mday="${d}">${toFa(d)}</button>`).join('')}</div></div>` : ''}
       <div class="recurring-actions ${hasRecurring ? 'has-clear' : ''}">
         <button type="button" class="recur-btn-cancel" id="recurCancel">بیخیال</button>
-        ${hasRecurring ? `<button type="button" class="recur-btn-clear" id="recurClear">
-          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"/></svg>
-          حذف تکرار
-        </button>` : ''}
-        <button type="button" class="recur-btn-confirm" id="recurConfirm">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-          تایید
-        </button>
+        ${hasRecurring ? `<button type="button" class="recur-btn-clear" id="recurClear">حذف تکرار</button>` : ''}
+        <button type="button" class="recur-btn-confirm" id="recurConfirm">تایید</button>
       </div>
     </div>
     <div class="rd-menu hidden" id="rdMenu">
-      ${['daily','weekly','monthly','yearly'].map(k => `
-        <button type="button" class="rd-item ${recurringDraft.frequency===k?'active':''}" data-freq="${k}">
-          <span>${freqLabels[k]}</span>
-          ${recurringDraft.frequency===k ? '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' : ''}
-        </button>
-      `).join('')}
+      ${['daily','weekly','monthly','yearly'].map(k => `<button type="button" class="rd-item ${recurringDraft.frequency===k?'active':''}" data-freq="${k}"><span>${freqLabels[k]}</span></button>`).join('')}
     </div>`;
   const menu = document.getElementById('rdMenu');
   if (menu) document.body.appendChild(menu);
   attachRecurringEvents();
 }
-
 function attachRecurringEvents() {
   const overlay = document.getElementById('recurringOverlay');
   if (!overlay) return;
@@ -1517,160 +1180,7 @@ function attachRecurringEvents() {
   document.getElementById('recurCancel')?.addEventListener('click', closeRecurringModal);
 }
 
-/* ============================================================
-   Edit Modal
-============================================================ */
-function openEditModal(taskId) {
-  const task = state.tasks.find(t => t.id === taskId);
-  if (!task) return;
-
-  editTaskId = taskId;
-  isEditMode = true;
-  editDraft = {
-    title: task.title || '',
-    desc: task.description || '',
-    dueDate: task.dueDate || null,
-    dueTime: task.dueTime || null,
-    priority: task.priority || null,
-    tags: [...(task.tags || [])],
-    recurring: task.recurring ? { ...task.recurring } : null,
-    board: task.board || null,
-    calendarEventId: task.calendarEventId || null,
-    tasksApiId: task.tasksApiId || null,
-  };
-
-  document.querySelectorAll('.tasks-inline-popover').forEach(el => el.remove());
-  closePopover();
-
-  let overlay = document.getElementById('editTaskOverlay');
-  if (!overlay) {
-    overlay = document.createElement('div');
-    overlay.id = 'editTaskOverlay';
-    overlay.className = 'edit-task-overlay';
-    document.body.appendChild(overlay);
-  }
-  overlay.classList.remove('hidden');
-  overlay.onclick = (e) => { if (e.target === overlay) closeEditModal(); };
-
-  renderEditModal();
-  bindEditModalEvents();
-  updateEditToolbarState();
-  setTimeout(() => document.getElementById('editTaskTitle')?.focus(), 80);
-}
-
-function closeEditModal() {
-  document.getElementById('editTaskOverlay')?.classList.add('hidden');
-  closePopover();
-  closeRecurringModal();
-  isEditMode = false;
-  editDraft = null;
-  editTaskId = null;
-}
-
-function renderEditModal() {
-  const overlay = document.getElementById('editTaskOverlay');
-  if (!overlay || !editDraft) return;
-
-  overlay.innerHTML = `
-    <div class="edit-task-modal">
-      <button type="button" class="edit-task-close" id="editTaskClose" title="بستن">×</button>
-      <h3 class="edit-task-title">ویرایش تسک</h3>
-      <div class="edit-task-inputs">
-        <input type="text" id="editTaskTitle" class="edit-task-title-input" placeholder="عنوان تسک" value="${escapeHtml(editDraft.title)}" autocomplete="off">
-        <textarea id="editTaskDesc" class="edit-task-desc-input" placeholder="توضیحات..." rows="3">${escapeHtml(editDraft.desc)}</textarea>
-      </div>
-      <div class="edit-task-toolbar">
-        <button type="button" class="tn-icon" id="editRecurring" title="تکرار">
-          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
-          <span class="tn-label">تکرار</span>
-        </button>
-        <button type="button" class="tn-icon" id="editBoard" title="بورد">
-          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="18" rx="1.5"/><rect x="14" y="3" width="7" height="10" rx="1.5"/></svg>
-          <span class="tn-label">بورد</span>
-        </button>
-        <button type="button" class="tn-icon" id="editPriority" title="اولویت">
-          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
-          <span class="tn-label">اولویت</span>
-        </button>
-        <button type="button" class="tn-icon" id="editTime" title="ساعت">
-          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-          <span class="tn-label">ساعت</span>
-        </button>
-        <button type="button" class="tn-icon" id="editCalendar" title="سررسید">
-          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-          <span class="tn-label">سررسید</span>
-        </button>
-        <button type="button" class="tn-icon" id="editTag" title="برچسب‌ها">
-          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
-          <span class="tn-label">برچسب‌ها</span>
-        </button>
-      </div>
-      <div class="edit-task-actions">
-        <button type="button" class="edit-task-btn edit-task-btn-delete" id="editTaskDelete">
-          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"/></svg>
-          حذف
-        </button>
-        <button type="button" class="edit-task-btn edit-task-btn-save" id="editTaskSave">
-          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-          ویرایش تسک
-        </button>
-      </div>
-    </div>`;
-}
-
-function bindEditModalEvents() {
-  document.getElementById('editTaskClose')?.addEventListener('click', closeEditModal);
-  document.getElementById('editRecurring')?.addEventListener('click', (e) => { e.stopPropagation(); openPopover('recurring', e.currentTarget); });
-  document.getElementById('editBoard')?.addEventListener('click', (e) => { e.stopPropagation(); openPopover('board', e.currentTarget); });
-  document.getElementById('editPriority')?.addEventListener('click', (e) => { e.stopPropagation(); openPopover('priority', e.currentTarget); });
-  document.getElementById('editTime')?.addEventListener('click', (e) => { e.stopPropagation(); openPopover('time', e.currentTarget); });
-  document.getElementById('editCalendar')?.addEventListener('click', (e) => { e.stopPropagation(); openPopover('date', e.currentTarget); });
-  document.getElementById('editTag')?.addEventListener('click', (e) => { e.stopPropagation(); openPopover('tag', e.currentTarget); });
-  document.getElementById('editTaskDelete')?.addEventListener('click', () => {
-    if (!editTaskId) return;
-    const id = editTaskId;
-    closeEditModal();
-    deleteTask(id);
-  });
-  document.getElementById('editTaskSave')?.addEventListener('click', submitEdit);
-}
-
-function submitEdit() {
-  const task = state.tasks.find(t => t.id === editTaskId);
-  if (!task || !editDraft) return;
-  const titleEl = document.getElementById('editTaskTitle');
-  const descEl = document.getElementById('editTaskDesc');
-  const title = (titleEl?.value || '').trim();
-  const desc = (descEl?.value || '').trim();
-  if (!title) { titleEl?.focus(); return; }
-
-  task.title = title;
-  task.description = desc;
-  task.dueDate = editDraft.dueDate;
-  task.dueTime = editDraft.dueTime;
-  task.priority = editDraft.priority;
-  task.tags = [...editDraft.tags];
-  task.recurring = editDraft.recurring;
-  task.board = editDraft.board;
-  task.calendarEventId = editDraft.calendarEventId;
-  task.tasksApiId = editDraft.tasksApiId;
-  task.updatedAt = Date.now();
-
-  persist();
-  closeEditModal();
-  render();
-
-  syncTaskEverywhere(task);
-  if (!task.dueDate && task.calendarEventId) {
-    deleteTaskCalendarEvent(task);
-    delete task.calendarEventId;
-    persist();
-  }
-}
-
-/* ============================================================
-   Panels
-============================================================ */
+/* ============ Panels ============ */
 function closeAllPanels() {
   document.querySelectorAll('.task-panel-pop').forEach(el => el.remove());
 }
@@ -1685,67 +1195,54 @@ function openMorePanel() {
   if (!rect) return;
   const panel = document.createElement('div');
   panel.className = 'task-panel-pop';
-  panel.innerHTML = `
-    <label class="tp-more-item">
-      <span>نمایش انجام شده‌ها</span>
-      <span class="tp-checkbox ${state.showCompleted ? 'checked' : ''}" id="tpShowCompleted"></span>
-    </label>
-    <div class="tp-divider"></div>
-    <button class="tp-more-item danger" id="tpDeleteAll">
-      <span>حذف همه تسک‌ها</span>
-      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"/></svg>
-    </button>`;
+  if (state.activeTab === 'tasks') {
+    panel.innerHTML = `
+      <label class="tp-more-item"><span>نمایش انجام شده‌ها</span><span class="tp-checkbox ${state.showCompleted ? 'checked' : ''}" id="tpShowCompleted"></span></label>
+      <div class="tp-divider"></div>
+      <button class="tp-more-item danger" id="tpDeleteAll"><span>حذف همه تسک‌ها</span></button>`;
+  } else {
+    panel.innerHTML = `<button class="tp-more-item danger" id="tpDeleteAllNotes"><span>حذف همه یادداشت‌ها</span></button>`;
+  }
   document.body.appendChild(panel);
   positionPanel(panel, rect);
   document.getElementById('tpShowCompleted')?.addEventListener('click', (e) => {
     e.preventDefault(); e.stopPropagation();
     state.showCompleted = !state.showCompleted;
     document.getElementById('tpShowCompleted')?.classList.toggle('checked', state.showCompleted);
-    render();
+    renderTasks();
   });
   document.getElementById('tpDeleteAll')?.addEventListener('click', () => {
-    const key = state.activeTab === 'tasks' ? 'tasks' : 'notes';
-    const label = key === 'tasks' ? 'تسک‌ها' : 'یادداشت‌ها';
-    if (confirm(`همه ${label} حذف شوند؟`)) { state[key] = []; persist(); render(); }
+    if (confirm('همه تسک‌ها حذف شوند؟')) { sharedState.tasks = []; saveAllState(); renderTasks(); }
+    closeAllPanels();
+  });
+  document.getElementById('tpDeleteAllNotes')?.addEventListener('click', () => {
+    window.dispatchEvent(new CustomEvent('notes-delete-all'));
     closeAllPanels();
   });
 }
 function openFilterPanel() {
   const rect = document.getElementById('taskActionFilter')?.getBoundingClientRect();
   if (!rect) return;
+  if (state.activeTab === 'notes') {
+    window.dispatchEvent(new CustomEvent('notes-open-filter', { detail: { rect } }));
+    return;
+  }
   const panel = document.createElement('div');
   panel.className = 'task-panel-pop filter-panel';
   panel.innerHTML = `
-    <div class="tp-section">
-      <div class="tp-section-title">تاریخ سررسید</div>
-      <div class="tp-chip-row">
-        <button class="tp-chip ${state.filter.due==='past'?'active':''}" data-fdue="past">گذشته</button>
-        <button class="tp-chip ${state.filter.due==='today'?'active':''}" data-fdue="today">امروز</button>
-        <button class="tp-chip ${state.filter.due==='week'?'active':''}" data-fdue="week">این هفته</button>
-        <button class="tp-chip ${state.filter.due==='none'?'active':''}" data-fdue="none">بدون سررسید</button>
-      </div>
-    </div>
-    <div class="tp-section">
-      <div class="tp-section-title">اولویت</div>
-      <div class="tp-chip-row">
-        ${Object.entries(PRIORITIES).map(([k,v]) => `
-          <button class="tp-chip ${state.filter.priority===k?'active':''}" data-fprio="${k}">
-            <span class="tp-dot" style="background:${v.color}"></span>${v.label}
-          </button>
-        `).join('')}
-        <button class="tp-chip ${state.filter.priority==='none'?'active':''}" data-fprio="none">بدون اولویت</button>
-      </div>
-    </div>
-    <div class="tp-section">
-      <div class="tp-section-title">برچسب‌ها</div>
-      <div class="tp-chip-row">
-        ${state.allTags.map(t => `
-          <button class="tp-chip ${state.filter.tags.includes(t.id)?'active':''}" data-ftag="${t.id}">
-            <span class="tp-dot" style="background:${t.color}"></span>${t.name}
-          </button>
-        `).join('')}
-      </div>
-    </div>
+    <div class="tp-section"><div class="tp-section-title">تاریخ سررسید</div><div class="tp-chip-row">
+      <button class="tp-chip ${state.filter.due==='past'?'active':''}" data-fdue="past">گذشته</button>
+      <button class="tp-chip ${state.filter.due==='today'?'active':''}" data-fdue="today">امروز</button>
+      <button class="tp-chip ${state.filter.due==='week'?'active':''}" data-fdue="week">این هفته</button>
+      <button class="tp-chip ${state.filter.due==='none'?'active':''}" data-fdue="none">بدون سررسید</button>
+    </div></div>
+    <div class="tp-section"><div class="tp-section-title">اولویت</div><div class="tp-chip-row">
+      ${Object.entries(PRIORITIES).map(([k,v]) => `<button class="tp-chip ${state.filter.priority===k?'active':''}" data-fprio="${k}"><span class="tp-dot" style="background:${v.color}"></span>${v.label}</button>`).join('')}
+      <button class="tp-chip ${state.filter.priority==='none'?'active':''}" data-fprio="none">بدون اولویت</button>
+    </div></div>
+    <div class="tp-section"><div class="tp-section-title">برچسب‌ها</div><div class="tp-chip-row">
+      ${getTags().map(t => `<button class="tp-chip ${state.filter.tags.includes(t.id)?'active':''}" data-ftag="${t.id}"><span class="tp-dot" style="background:${t.color}"></span>${t.name}</button>`).join('')}
+    </div></div>
     <button class="tp-clear-btn" id="tpClearFilter">پاک کردن همه فیلترها</button>`;
   document.body.appendChild(panel);
   positionPanel(panel, rect);
@@ -1753,14 +1250,14 @@ function openFilterPanel() {
     b.addEventListener('click', () => {
       const v = b.dataset.fdue;
       state.filter.due = state.filter.due === v ? null : v;
-      render(); closeAllPanels(); openFilterPanel();
+      renderTasks(); closeAllPanels(); openFilterPanel();
     });
   });
   panel.querySelectorAll('[data-fprio]').forEach(b => {
     b.addEventListener('click', () => {
       const v = b.dataset.fprio;
       state.filter.priority = state.filter.priority === v ? null : v;
-      render(); closeAllPanels(); openFilterPanel();
+      renderTasks(); closeAllPanels(); openFilterPanel();
     });
   });
   panel.querySelectorAll('[data-ftag]').forEach(b => {
@@ -1768,17 +1265,21 @@ function openFilterPanel() {
       const v = b.dataset.ftag;
       const idx = state.filter.tags.indexOf(v);
       if (idx >= 0) state.filter.tags.splice(idx, 1); else state.filter.tags.push(v);
-      render(); closeAllPanels(); openFilterPanel();
+      renderTasks(); closeAllPanels(); openFilterPanel();
     });
   });
   document.getElementById('tpClearFilter')?.addEventListener('click', () => {
     state.filter = { due: null, priority: null, tags: [] };
-    render(); closeAllPanels();
+    renderTasks(); closeAllPanels();
   });
 }
 function openSortPanel() {
   const rect = document.getElementById('taskActionSort')?.getBoundingClientRect();
   if (!rect) return;
+  if (state.activeTab === 'notes') {
+    window.dispatchEvent(new CustomEvent('notes-open-sort', { detail: { rect } }));
+    return;
+  }
   const panel = document.createElement('div');
   panel.className = 'task-panel-pop sort-panel';
   const opts = [
@@ -1788,27 +1289,20 @@ function openSortPanel() {
   ];
   panel.innerHTML = `
     <div class="tp-section-title" style="padding:6px 10px;">مرتب‌سازی بر اساس</div>
-    ${opts.map(o => `
-      <button class="tp-more-item" data-sort="${o.key}">
-        <span>${o.label}</span>
-        <span class="tp-radio ${state.sortBy === o.key ? 'active' : ''}"></span>
-      </button>
-    `).join('')}`;
+    ${opts.map(o => `<button class="tp-more-item" data-sort="${o.key}"><span>${o.label}</span><span class="tp-radio ${state.sortBy === o.key ? 'active' : ''}"></span></button>`).join('')}`;
   document.body.appendChild(panel);
   positionPanel(panel, rect);
   panel.querySelectorAll('[data-sort]').forEach(b => {
     b.addEventListener('click', () => {
       state.sortBy = b.dataset.sort;
-      render(); closeAllPanels();
+      renderTasks(); closeAllPanels();
     });
   });
 }
 
-/* ============================================================
-   INIT
-============================================================ */
+/* ============ INIT ============ */
 export function initTasks() {
-  restore();
+  loadAllState();
 
   document.querySelectorAll('.task-tabs .tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -1816,15 +1310,33 @@ export function initTasks() {
       if (!tab) return;
       state.activeTab = tab;
       document.querySelectorAll('.task-tabs .tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
-      const title = document.getElementById('tnTitle');
-      const desc = document.getElementById('tnDesc');
-      if (title) title.placeholder = tab === 'tasks' ? 'نوشتن تسک جدید...' : 'نوشتن یادداشت جدید...';
-      if (desc) desc.placeholder = tab === 'tasks' ? 'توضیحات...' : 'متن یادداشت...';
-      document.querySelectorAll('.tn-toolbar .tn-icon').forEach(el => {
-        const hideForNotes = ['tnRecurring','tnPriority','tnTime','tnCalendar','tnTag'].includes(el.id);
-        el.style.display = (tab === 'notes' && hideForNotes) ? 'none' : '';
-      });
-      render();
+      const titleEl = document.getElementById('tnTitle');
+      const descEl = document.getElementById('tnDesc');
+      const inputWrap = document.querySelector('.task-new-input-wrap');
+      const toolbar = document.querySelector('.tn-toolbar');
+
+      if (tab === 'tasks') {
+        if (titleEl) titleEl.style.display = '';
+        if (descEl) descEl.style.display = '';
+        if (toolbar) toolbar.style.display = '';
+        if (inputWrap) {
+          inputWrap.classList.remove('note-mode');
+          inputWrap.onclick = null;
+        }
+        renderTasks();
+      } else {
+        if (titleEl) titleEl.style.display = 'none';
+        if (descEl) descEl.style.display = 'none';
+        if (toolbar) toolbar.style.display = 'none';
+        if (inputWrap) {
+          inputWrap.classList.add('note-mode');
+          inputWrap.onclick = (e) => {
+            e.stopPropagation();
+            window.dispatchEvent(new CustomEvent('notes-open-editor'));
+          };
+        }
+        window.dispatchEvent(new CustomEvent('notes-render'));
+      }
     });
   });
 
@@ -1833,7 +1345,11 @@ export function initTasks() {
     e.stopPropagation();
     state.hidden = !state.hidden;
     document.getElementById('taskActionHide')?.classList.toggle('active', state.hidden);
-    render();
+    if (state.activeTab === 'notes') {
+      window.dispatchEvent(new CustomEvent('notes-hide-toggle', { detail: state.hidden }));
+    } else {
+      renderTasks();
+    }
   });
   document.getElementById('taskActionFilter')?.addEventListener('click', (e) => { e.stopPropagation(); closeAllPanels(); openFilterPanel(); });
   document.getElementById('taskActionSort')?.addEventListener('click', (e) => { e.stopPropagation(); closeAllPanels(); openSortPanel(); });
@@ -1873,38 +1389,19 @@ export function initTasks() {
   dispatchSyncStatus();
 
   window.addEventListener('online', () => {
-    console.log('🌐 آنلاین شد — پردازش صف سینک...');
     setTimeout(() => { processQueue(); processPendingDeletes(); }, 1500);
-  });
-  window.addEventListener('offline', () => {
-    console.log('📴 آفلاین شد');
-    dispatchSyncStatus();
   });
   window.addEventListener('user-signed-in', () => {
     setTimeout(() => { processQueue(); processPendingDeletes(); }, 2000);
   });
-
-  // 🆕 تشخیص تسک‌های حذف‌شده از دستگاه دیگه
-  window.addEventListener('abner-removed-tasks', (e) => {
-    const removed = e.detail || [];
-    removed.forEach(t => addPendingDelete(t));
-    processPendingDeletes();
-  });
-
-  // 🆕 بعد از دانلود از Drive
-  window.addEventListener('abner-check-pending-deletes', () => {
-    processPendingDeletes();
-  });
-
+  window.addEventListener('abner-check-pending-deletes', () => processPendingDeletes());
   if (navigator.onLine && getUser()) {
     setTimeout(() => { processQueue(); processPendingDeletes(); }, 3000);
   }
-
-  // 🆕 هر ۳۰ ثانیه صف حذف رو پردازش کن
   setInterval(() => {
     if (navigator.onLine && getUser()) processPendingDeletes();
   }, 30 * 1000);
 
   updateToolbarState();
-  render();
+  renderTasks();
 }

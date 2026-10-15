@@ -10,6 +10,7 @@ import { initCalendar, initConverter } from './modules/calendar/calendar.js';
 import { initAuth } from './modules/auth/auth.js';
 import { initSync } from './modules/sync/sync.js';
 import { initTasks } from './modules/tasks/tasks.js';
+import { initNotes } from './modules/notes/notes.js';
 
 /* ============================================================
    🆕 Pull-to-Refresh برای PWA (موبایل و تبلت)
@@ -141,6 +142,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   initCalendar();
   initConverter();
   initTasks();           // ✅ ماژول جدید تسک و یادداشت
+  initNotes();  // 🆕
 
   // ---------- احراز هویت و سینک ----------
   await initAuth();
