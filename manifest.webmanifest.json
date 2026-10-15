@@ -3,6 +3,7 @@
   "short_name": "آبنر",
   "description": "صفحه تب جدید مدرن و وب‌اپ آبنر",
   "start_url": "./index.html",
+  "scope": "./",
   "display": "standalone",
   "orientation": "portrait-primary",
   "background_color": "#0b0f19",
@@ -28,12 +29,4 @@
       "type": "image/png"
     }
   ]
-}
-
-{
-  "name": "آبنر | Abner",
-  ...
-  "scope": "./",
-  "start_url": "./index.html",
-  ...
 }
