@@ -1608,6 +1608,8 @@ function submitEdit() {
   task.tags = [...editDraft.tags];
   task.recurring = editDraft.recurring;
   task.board = editDraft.board;
+  task.calendarEventId = editDraft.calendarEventId;   // 🆕
+  task.tasksApiId = editDraft.tasksApiId;             // 🆕
   task.updatedAt = Date.now();
 
   persist();
@@ -1844,4 +1846,21 @@ export function initTasks() {
 
   updateToolbarState();
   render();
+
+  // 🆕 Force re-sync همه تسک‌ها
+  window.addEventListener('force-resync-all', async () => {
+    console.log('🔄 شروع force resync همه تسک‌ها...');
+    for (const t of state.tasks) {
+      // پاک کردن ID های نامعتبر
+      delete t.calendarEventId;
+      delete t.tasksApiId;
+      if (t.dueDate) {
+        await syncTaskToCalendar(t);
+        await syncTaskToGoogleTasks(t);
+      }
+    }
+    persist();
+    render();
+    console.log('✅ Force resync تمام شد');
+  });
 }

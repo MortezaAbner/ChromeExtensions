@@ -155,6 +155,7 @@ export async function refreshToken() {
   }
 
   /* ---------- PWA ---------- */
+    /* ---------- PWA ---------- */
   if (!window.google?.accounts?.oauth2) return null;
 
   return new Promise((resolve) => {
@@ -164,6 +165,12 @@ export async function refreshToken() {
         scope: SCOPES.join(' '),
         callback: async (response) => {
           if (response.error || !response.access_token) {
+            // اگه refresh نشد، توکن رو پاک کن که کاربر مجبور به لاگین بشه
+            console.warn('⚠️ Refresh نشد:', response.error);
+            currentUser = null;
+            currentToken = null;
+            try { localStorage.removeItem(AUTH_KEY); } catch (_) {}
+            window.dispatchEvent(new CustomEvent('user-signed-out'));
             resolve(null);
             return;
           }
@@ -176,14 +183,13 @@ export async function refreshToken() {
           resolve(newToken);
         },
       });
-      // prompt: '' → silent refresh (بدون پاپ‌آپ)
+      // prompt: '' → silent, اگه نشد کاربر رو logout کن
       tempClient.requestAccessToken({ prompt: '' });
     } catch (_) {
       resolve(null);
     }
   });
-}
-
+  
 /* ============================================================
    ورود کلی
 ============================================================ */

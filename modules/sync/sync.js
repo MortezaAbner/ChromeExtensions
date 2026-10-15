@@ -265,9 +265,23 @@ export async function initSync() {
   window.addEventListener('online', () => setTimeout(syncNow, 500));
   window.addEventListener('offline', () => setStatus('offline'));
 
-  setInterval(() => {
+    setInterval(() => {
     if (navigator.onLine && getUser()) syncNow();
   }, 5 * 60 * 1000);
+
+  // 🆕 هر ۳۰ دقیقه چک کن توکن سالمه
+  setInterval(async () => {
+    if (!getUser()) return;
+    const token = await getToken();
+    if (!token) return;
+    try {
+      const r = await fetch('https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=' + token);
+      if (!r.ok) {
+        console.warn('⚠️ توکن منقضی — کاربر باید دوباره لاگین کنه');
+        setStatus('auth-error');
+      }
+    } catch (_) {}
+  }, 30 * 60 * 1000);
 
   // ✅ FIX: دانلود اولیه از Drive روی هر بار باز شدن
   if (user) {
@@ -276,4 +290,12 @@ export async function initSync() {
       setTimeout(uploadAll, 1000);
     }, 2000);
   }
+
+  // 🆕 اگه توکن منقضی شده، کاربر رو راهنمایی کن
+  window.addEventListener('abner-sync-status', (e) => {
+    if (e.detail === 'auth-error') {
+      console.warn('⚠️ توکن منقضی شده — باید دوباره لاگین کنی');
+    }
+  });
+
 }
