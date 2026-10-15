@@ -248,9 +248,8 @@ export async function signOut() {
 async function saveUser(user) {
   try {
     await chrome.storage.local.set({ [AUTH_KEY]: user });
-  } catch (_) {
-    try { localStorage.setItem(AUTH_KEY, JSON.stringify(user)); } catch (_) {}
-  }
+  } catch (_) {}
+  try { localStorage.setItem(AUTH_KEY, JSON.stringify(user)); } catch (_) {}
 }
 
 /* ---------- بازیابی ---------- */
@@ -259,15 +258,18 @@ export async function loadUser() {
     const r = await chrome.storage.local.get([AUTH_KEY]);
     currentUser = r[AUTH_KEY] || null;
     currentToken = currentUser?.token || null;
-    return currentUser;
-  } catch (_) {
-    try {
-      const raw = localStorage.getItem(AUTH_KEY);
-      currentUser = raw ? JSON.parse(raw) : null;
-      currentToken = currentUser?.token || null;
+    if (currentUser) {
+      try { localStorage.setItem(AUTH_KEY, JSON.stringify(currentUser)); } catch (_) {}
       return currentUser;
-    } catch (_) { return null; }
-  }
+    }
+  } catch (_) {}
+
+  try {
+    const raw = localStorage.getItem(AUTH_KEY);
+    currentUser = raw ? JSON.parse(raw) : null;
+    currentToken = currentUser?.token || null;
+    return currentUser;
+  } catch (_) { return null; }
 }
 
 /* ---------- توکن ---------- */
@@ -277,7 +279,17 @@ export async function getToken() {
   return u?.token || null;
 }
 
-export function getUser() { return currentUser; }
+export function getUser() { 
+  if (currentUser) return currentUser;
+  try {
+    const raw = localStorage.getItem(AUTH_KEY);
+    if (raw) {
+      currentUser = JSON.parse(raw);
+      currentToken = currentUser?.token || null;
+    }
+  } catch (_) {}
+  return currentUser;
+}
 
 /* ---------- پاپ‌آپ ---------- */
 export function showLoginPopup() {

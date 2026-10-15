@@ -364,11 +364,18 @@ async function deleteTaskFromGoogleTasks(task) {
 ============================================================ */
 async function syncTaskEverywhere(task) {
   if (!task) return;
-  if (!navigator.onLine) { enqueue('sync', task); return; }
+  if (!navigator.onLine) {
+    console.log('   ⚠️ آفلاین — به صف اضافه شد');
+    enqueue('sync', task);
+    return;
+  }
   const results = await Promise.allSettled([
     syncTaskToCalendar(task),
     syncTaskToGoogleTasks(task),
   ]);
+  console.log('   نتایج سینک:', results.map(r =>
+    r.status === 'fulfilled' ? r.value : { rejected: r.reason?.message }
+  ));
   const hasFailure = results.some(r =>
     r.status === 'rejected' || (r.value && r.value.ok === false && r.value.reason !== 'skipped')
   );
@@ -778,8 +785,9 @@ function submitNew() {
   updateToolbarState();
   persist(); render();
 
-  const lastTask = state.tasks[state.tasks.length - 1];
+    const lastTask = state.tasks[state.tasks.length - 1];
   if (lastTask && state.activeTab === 'tasks') {
+    console.log('🚀 شروع سینک برای:', lastTask.title, '| dueDate:', lastTask.dueDate, '| user:', getUser()?.email);
     syncTaskEverywhere(lastTask);
   }
 }
