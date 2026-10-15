@@ -1,4 +1,4 @@
-/* ============ همگام‌سازی با گوگل درایو - آبنر (v4) ============ */
+/* ============ همگام‌سازی با گوگل درایو - آبنر (v5) ============ */
 
 import { getToken, getUser, refreshToken } from '../auth/auth.js';
 
@@ -36,16 +36,12 @@ async function driveRequest(url, options = {}, retried = false) {
 
   if (res.status === 401 && !retried) {
     if (isExtension()) {
-      try {
-        await new Promise(r => chrome.identity.removeCachedAuthToken({ token }, r));
-      } catch (_) {}
+      try { await new Promise(r => chrome.identity.removeCachedAuthToken({ token }, r)); } catch (_) {}
     }
     try {
       const newToken = await refreshToken();
       if (newToken) return driveRequest(url, options, true);
-    } catch (e) {
-      console.error('❌ خطا در تازه‌سازی توکن:', e);
-    }
+    } catch (e) { console.error('❌ تازه‌سازی توکن:', e); }
     throw new Error('توکن منقضی شده');
   }
 
@@ -69,10 +65,7 @@ async function findFile(name) {
 }
 
 async function uploadFile(name, content, existingId) {
-  const metadata = {
-    name,
-    parents: existingId ? undefined : ['appDataFolder']
-  };
+  const metadata = { name, parents: existingId ? undefined : ['appDataFolder'] };
   const boundary = '----abner' + Date.now();
   const body =
     `--${boundary}\r\n` +
@@ -82,11 +75,9 @@ async function uploadFile(name, content, existingId) {
     `Content-Type: application/json\r\n\r\n` +
     JSON.stringify(content) + `\r\n` +
     `--${boundary}--`;
-
   const url = existingId
     ? `${UPLOAD_API}/files/${existingId}?uploadType=multipart`
     : `${UPLOAD_API}/files?uploadType=multipart`;
-
   await driveRequest(url, {
     method: existingId ? 'PATCH' : 'POST',
     headers: { 'Content-Type': `multipart/related; boundary=${boundary}` },
@@ -113,7 +104,6 @@ const SYNC_KEYS = [
   'abner_sync_queue',
 ];
 
-/* ✅ FIX: استفاده از localStorage به جای chrome.storage */
 function collectLocalData() {
   const result = {};
   SYNC_KEYS.forEach(k => {
@@ -131,76 +121,48 @@ function applyRemoteData(data) {
       localStorage.setItem(k, typeof v === 'string' ? v : JSON.stringify(v));
     } catch (_) {}
   });
-  try {
-    if (typeof chrome !== 'undefined' && chrome.storage) {
-      chrome.storage.local.set(data);
-    }
-  } catch (_) {}
 }
 
-/* ---------- آپلود ---------- */
 async function uploadAll() {
   if (isSyncing) return;
   isSyncing = true;
   setStatus('syncing');
-
   try {
     const local = collectLocalData();
     const user = getUser();
     if (!user) throw new Error('کاربر لاگین نیست');
-
     console.log('📤 آپلود به Drive:', Object.keys(local).length, 'کلید');
-
-    const payload = {
-      version: 4,
-      user: user.email,
-      updatedAt: Date.now(),
-      data: local
-    };
-
+    const payload = { version: 5, user: user.email, updatedAt: Date.now(), data: local };
     const existing = await findFile(SYNC_FILE);
     await uploadFile(SYNC_FILE, payload, existing?.id);
     try { localStorage.setItem(LOCAL_TS_KEY, String(payload.updatedAt)); } catch (_) {}
-
     setStatus('synced');
     window.dispatchEvent(new CustomEvent('sync-complete', { detail: { direction: 'upload' } }));
   } catch (e) {
     console.error('❌ خطا در آپلود:', e.message);
-    setStatus(e.message.includes('توکن') || e.message.includes('401') ? 'auth-error' : 'error');
+    setStatus(e.message.includes('توکن') ? 'auth-error' : 'error');
   } finally {
     isSyncing = false;
   }
 }
 
-/* ---------- دانلود ---------- */
 async function downloadAll() {
   if (isSyncing) return;
   isSyncing = true;
   setStatus('syncing');
-
   try {
     const file = await findFile(SYNC_FILE);
-    if (!file) {
-      console.log('📥 فایل روی Drive نیست — اولین بار');
-      setStatus('idle');
-      isSyncing = false;
-      return;
-    }
-
+    if (!file) { setStatus('idle'); isSyncing = false; return; }
     const remote = await downloadFile(file.id);
-    if (!remote || !remote.data) {
-      setStatus('idle');
-      isSyncing = false;
-      return;
-    }
+    if (!remote || !remote.data) { setStatus('idle'); isSyncing = false; return; }
 
     const remoteTs = remote.updatedAt || 0;
     const localTs = parseInt(localStorage.getItem(LOCAL_TS_KEY) || '0', 10);
 
-    console.log('📥 Drive ts:', remoteTs, ' | Local ts:', localTs);
+    console.log('📥 Drive ts:', remoteTs, '| Local ts:', localTs);
 
     if (remoteTs <= localTs) {
-      console.log('✅ داده لوکال جدیدتره — نیازی به دانلود نیست');
+      console.log('✅ داده لوکال جدیدتره');
       setStatus('synced');
       isSyncing = false;
       return;
@@ -209,23 +171,20 @@ async function downloadAll() {
     applyRemoteData(remote.data);
     try { localStorage.setItem(LOCAL_TS_KEY, String(remoteTs)); } catch (_) {}
     window.dispatchEvent(new CustomEvent('sync-complete', { detail: { direction: 'download' } }));
-
     setStatus('synced');
     setTimeout(() => window.location.reload(), 500);
   } catch (e) {
     console.error('❌ خطا در دانلود:', e.message);
-    setStatus(e.message.includes('توکن') || e.message.includes('401') ? 'auth-error' : 'error');
+    setStatus(e.message.includes('توکن') ? 'auth-error' : 'error');
   } finally {
     isSyncing = false;
   }
 }
 
-/* ---------- sync دستی ---------- */
 export async function syncNow() {
   const user = getUser();
   if (!user) { setStatus('idle'); return; }
   if (!navigator.onLine) { setStatus('offline'); return; }
-
   await downloadAll();
   await uploadAll();
 }
@@ -235,16 +194,12 @@ function scheduleSync(delay = 2000) {
   syncTimer = setTimeout(uploadAll, delay);
 }
 
-/* ---------- INIT ---------- */
 export async function initSync() {
   const user = getUser();
   if (!user) setStatus('idle');
 
   window.addEventListener('user-signed-in', async () => {
-    setTimeout(async () => {
-      await downloadAll();
-      await uploadAll();
-    }, 800);
+    setTimeout(async () => { await downloadAll(); await uploadAll(); }, 800);
   });
 
   try {
@@ -265,37 +220,14 @@ export async function initSync() {
   window.addEventListener('online', () => setTimeout(syncNow, 500));
   window.addEventListener('offline', () => setStatus('offline'));
 
-    setInterval(() => {
+  setInterval(() => {
     if (navigator.onLine && getUser()) syncNow();
   }, 5 * 60 * 1000);
 
-  // 🆕 هر ۳۰ دقیقه چک کن توکن سالمه
-  setInterval(async () => {
-    if (!getUser()) return;
-    const token = await getToken();
-    if (!token) return;
-    try {
-      const r = await fetch('https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=' + token);
-      if (!r.ok) {
-        console.warn('⚠️ توکن منقضی — کاربر باید دوباره لاگین کنه');
-        setStatus('auth-error');
-      }
-    } catch (_) {}
-  }, 30 * 60 * 1000);
-
-  // ✅ FIX: دانلود اولیه از Drive روی هر بار باز شدن
   if (user) {
     setTimeout(async () => {
       await downloadAll();
       setTimeout(uploadAll, 1000);
     }, 2000);
   }
-
-  // 🆕 اگه توکن منقضی شده، کاربر رو راهنمایی کن
-  window.addEventListener('abner-sync-status', (e) => {
-    if (e.detail === 'auth-error') {
-      console.warn('⚠️ توکن منقضی شده — باید دوباره لاگین کنی');
-    }
-  });
-
 }

@@ -15,17 +15,13 @@ const SCOPES = [
 let currentUser = null;
 let currentToken = null;
 let gisLoaded = false;
-let webTokenClient = null;   // 🆕 برای refresh در PWA
+let webTokenClient = null;
 
-/* ---------- تشخیص حالت ---------- */
 function isExtension() {
   return typeof chrome !== 'undefined' && chrome.identity && chrome.identity.getAuthToken;
 }
 
-/* ============================================================
-   حالت ۱: افزونه کروم
-============================================================ */
-
+/* ---------- افزونه کروم ---------- */
 async function signInExtension() {
   return new Promise((resolve, reject) => {
     chrome.identity.getAuthToken({ interactive: true }, async (token) => {
@@ -34,7 +30,6 @@ async function signInExtension() {
         return;
       }
       if (!token) { reject(new Error('توکن دریافت نشد')); return; }
-
       try {
         const res = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
           headers: { Authorization: `Bearer ${token}` }
@@ -57,40 +52,28 @@ async function signInExtension() {
   });
 }
 
-/* ============================================================
-   حالت ۲: وب‌اپ PWA (Google Identity Services)
-============================================================ */
-
+/* ---------- PWA ---------- */
 function loadGIS() {
   return new Promise((resolve, reject) => {
-    if (gisLoaded && window.google?.accounts) {
-      resolve();
-      return;
-    }
-    if (window.google?.accounts) {
-      gisLoaded = true;
-      resolve();
-      return;
-    }
+    if (gisLoaded && window.google?.accounts) { resolve(); return; }
+    if (window.google?.accounts) { gisLoaded = true; resolve(); return; }
     const script = document.createElement('script');
     script.src = 'https://accounts.google.com/gsi/client';
     script.async = true;
     script.defer = true;
     script.onload = () => { gisLoaded = true; resolve(); };
-    script.onerror = () => reject(new Error('خطا در بارگذاری Google Identity Services'));
+    script.onerror = () => reject(new Error('خطا در بارگذاری GIS'));
     document.head.appendChild(script);
   });
 }
 
 async function signInWebPWA() {
   await loadGIS();
-
   return new Promise((resolve, reject) => {
     if (!window.google?.accounts?.oauth2) {
-      reject(new Error('Google Identity Services آماده نیست'));
+      reject(new Error('GIS آماده نیست'));
       return;
     }
-
     const client = window.google.accounts.oauth2.initTokenClient({
       client_id: WEB_CLIENT_ID,
       scope: SCOPES.join(' '),
@@ -115,47 +98,32 @@ async function signInWebPWA() {
         } catch (e) { reject(e); }
       },
     });
-
-    webTokenClient = client;   // 🆕 ذخیره client برای refresh بعدی
+    webTokenClient = client;
     client.requestAccessToken();
   });
 }
 
-/* ============================================================
-   🆕 Refresh Token — هم افزونه هم PWA
-============================================================ */
+/* ---------- Refresh Token ---------- */
 export async function refreshToken() {
-  /* ---------- افزونه کروم ---------- */
   if (isExtension()) {
     return new Promise((resolve) => {
       chrome.identity.getAuthToken({ interactive: false }, (token) => {
         if (!chrome.runtime.lastError && token) {
           currentToken = token;
-          if (currentUser) {
-            currentUser.token = token;
-            saveUser(currentUser);
-          }
+          if (currentUser) { currentUser.token = token; saveUser(currentUser); }
           resolve(token);
           return;
         }
         chrome.identity.getAuthToken({ interactive: true }, (newToken) => {
-          if (chrome.runtime.lastError || !newToken) {
-            resolve(null);
-            return;
-          }
+          if (chrome.runtime.lastError || !newToken) { resolve(null); return; }
           currentToken = newToken;
-          if (currentUser) {
-            currentUser.token = newToken;
-            saveUser(currentUser);
-          }
+          if (currentUser) { currentUser.token = newToken; saveUser(currentUser); }
           resolve(newToken);
         });
       });
     });
   }
 
-  /* ---------- PWA ---------- */
-    /* ---------- PWA ---------- */
   if (!window.google?.accounts?.oauth2) return null;
 
   return new Promise((resolve) => {
@@ -163,50 +131,32 @@ export async function refreshToken() {
       const tempClient = window.google.accounts.oauth2.initTokenClient({
         client_id: WEB_CLIENT_ID,
         scope: SCOPES.join(' '),
-        callback: async (response) => {
+        callback: (response) => {
           if (response.error || !response.access_token) {
-            // اگه refresh نشد، توکن رو پاک کن که کاربر مجبور به لاگین بشه
-            console.warn('⚠️ Refresh نشد:', response.error);
-            currentUser = null;
-            currentToken = null;
-            try { localStorage.removeItem(AUTH_KEY); } catch (_) {}
-            window.dispatchEvent(new CustomEvent('user-signed-out'));
             resolve(null);
             return;
           }
           const newToken = response.access_token;
           currentToken = newToken;
-          if (currentUser) {
-            currentUser.token = newToken;
-            saveUser(currentUser);
-          }
+          if (currentUser) { currentUser.token = newToken; saveUser(currentUser); }
           resolve(newToken);
         },
       });
-      // prompt: '' → silent, اگه نشد کاربر رو logout کن
       tempClient.requestAccessToken({ prompt: '' });
-    } catch (_) {
-      resolve(null);
-    }
+    } catch (_) { resolve(null); }
   });
-  
-/* ============================================================
-   ورود کلی
-============================================================ */
+}
 
+/* ---------- ورود / خروج ---------- */
 export async function signIn() {
   try {
     let user;
-    if (isExtension()) {
-      user = await signInExtension();
-    } else {
-      user = await signInWebPWA();
-    }
+    if (isExtension()) user = await signInExtension();
+    else user = await signInWebPWA();
 
     currentUser = user;
     currentToken = user.token;
     await saveUser(user);
-
     window.dispatchEvent(new CustomEvent('user-signed-in', { detail: user }));
     return user;
   } catch (e) {
@@ -215,7 +165,6 @@ export async function signIn() {
   }
 }
 
-/* ---------- خروج ---------- */
 export async function signOut() {
   if (isExtension()) {
     try {
@@ -225,11 +174,8 @@ export async function signOut() {
       if (chrome.identity.clearAllCachedAuthTokens) {
         await new Promise(r => chrome.identity.clearAllCachedAuthTokens(r));
       }
-    } catch (e) {
-      console.warn('خطا در پاک کردن کش:', e);
-    }
+    } catch (e) { console.warn('خطا در پاک کردن کش:', e); }
   } else {
-    // برای PWA - revoke token
     try {
       if (currentToken && window.google?.accounts?.oauth2) {
         window.google.accounts.oauth2.revoke(currentToken, () => {});
@@ -241,30 +187,23 @@ export async function signOut() {
   currentUser = null;
   currentToken = null;
 
-  try {
-    await chrome.storage.local.remove(AUTH_KEY);
-  } catch (_) {
-    localStorage.removeItem(AUTH_KEY);
-  }
+  try { await chrome.storage.local.remove(AUTH_KEY); } catch (_) {}
+  try { localStorage.removeItem(AUTH_KEY); } catch (_) {}
 
   window.dispatchEvent(new CustomEvent('user-signed-out'));
 }
 
-/* ---------- ذخیره ---------- */
 async function saveUser(user) {
-  try {
-    await chrome.storage.local.set({ [AUTH_KEY]: user });
-  } catch (_) {}
+  try { await chrome.storage.local.set({ [AUTH_KEY]: user }); } catch (_) {}
   try { localStorage.setItem(AUTH_KEY, JSON.stringify(user)); } catch (_) {}
 }
 
-/* ---------- بازیابی ---------- */
 export async function loadUser() {
   try {
     const r = await chrome.storage.local.get([AUTH_KEY]);
     currentUser = r[AUTH_KEY] || null;
-    currentToken = currentUser?.token || null;
     if (currentUser) {
+      currentToken = currentUser.token || null;
       try { localStorage.setItem(AUTH_KEY, JSON.stringify(currentUser)); } catch (_) {}
       return currentUser;
     }
@@ -278,14 +217,13 @@ export async function loadUser() {
   } catch (_) { return null; }
 }
 
-/* ---------- توکن ---------- */
 export async function getToken() {
   if (currentToken) return currentToken;
   const u = await loadUser();
   return u?.token || null;
 }
 
-export function getUser() { 
+export function getUser() {
   if (currentUser) return currentUser;
   try {
     const raw = localStorage.getItem(AUTH_KEY);
@@ -297,7 +235,6 @@ export function getUser() {
   return currentUser;
 }
 
-/* ---------- پاپ‌آپ ---------- */
 export function showLoginPopup() {
   document.getElementById('abLoginOverlay')?.classList.remove('hidden');
 }
@@ -305,7 +242,6 @@ export function hideLoginPopup() {
   document.getElementById('abLoginOverlay')?.classList.add('hidden');
 }
 
-/* ---------- نصب اول ---------- */
 async function isFirstInstall() {
   try {
     const r = await chrome.storage.local.get([FIRST_INSTALL_KEY]);
@@ -315,14 +251,10 @@ async function isFirstInstall() {
   }
 }
 async function markFirstInstallDone() {
-  try {
-    await chrome.storage.local.set({ [FIRST_INSTALL_KEY]: true });
-  } catch (_) {
-    localStorage.setItem(FIRST_INSTALL_KEY, 'true');
-  }
+  try { await chrome.storage.local.set({ [FIRST_INSTALL_KEY]: true }); } catch (_) {}
+  try { localStorage.setItem(FIRST_INSTALL_KEY, 'true'); } catch (_) {}
 }
 
-/* ---------- INIT ---------- */
 export async function initAuth() {
   const user = await loadUser();
   updateDockButton(user);
@@ -378,7 +310,6 @@ export async function initAuth() {
   window.addEventListener('user-signed-out', () => updateDockButton(null));
 }
 
-/* ---------- دکمه داکر ---------- */
 function updateDockButton(user) {
   const btn = document.getElementById('dock-btn-login');
   if (!btn) return;
@@ -386,11 +317,9 @@ function updateDockButton(user) {
   if (user) {
     btn.classList.add('ab-dock-btn-logged-in');
     btn.title = user.email;
-
     const customAvatar = localStorage.getItem('abner_custom_avatar');
     const avatarSrc = customAvatar || user.picture || '';
     const initial = (user.name || user.email || '?').charAt(0).toUpperCase();
-
     if (avatarSrc) {
       btn.innerHTML = `<img src="${avatarSrc}" alt="" class="ab-user-avatar-img" onerror="this.parentNode.innerHTML='<span class=\\'ab-user-initial\\'>${initial}</span>'">`;
     } else {
@@ -408,7 +337,6 @@ function updateDockButton(user) {
   }
 }
 
-/* ---------- منوی حساب ---------- */
 function showAccountMenu() {
   if (!currentUser) return;
   const existing = document.getElementById('abAccountMenu');
@@ -416,7 +344,6 @@ function showAccountMenu() {
 
   const btn = document.getElementById('dock-btn-login');
   const rect = btn.getBoundingClientRect();
-
   const customAvatar = localStorage.getItem('abner_custom_avatar');
   const avatarSrc = customAvatar || currentUser.picture || '';
   const initial = (currentUser.name || currentUser.email || '?').charAt(0).toUpperCase();
@@ -453,12 +380,10 @@ function showAccountMenu() {
       خروج از حساب
     </button>
   `;
-
   menu.style.position = 'fixed';
   menu.style.bottom = (window.innerHeight - rect.top + 10) + 'px';
   menu.style.left = rect.left + 'px';
   menu.style.zIndex = '999999';
-
   document.body.appendChild(menu);
 
   document.getElementById('abChangeAvatar')?.addEventListener('click', () => {
