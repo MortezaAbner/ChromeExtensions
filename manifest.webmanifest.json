@@ -29,3 +29,11 @@
     }
   ]
 }
+
+{
+  "name": "آبنر | Abner",
+  ...
+  "scope": "./",
+  "start_url": "./index.html",
+  ...
+}
