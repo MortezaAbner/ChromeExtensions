@@ -1,4 +1,4 @@
-/* ============ تسک و یادداشت — آبنر v14 (نهایی) ============ */
+/* ============ تسک و یادداشت — آبنر v15 (نهایی) ============ */
 
 body.theme-glass { --glass-rgba: 255, 255, 255; }
 body.theme-dark  { --glass-rgba: 15, 23, 42; }
@@ -240,19 +240,24 @@ body.theme-light { --glass-rgba: 255, 252, 245; }
   opacity: 0.55 !important;
 }
 #abnerTaskModule .task-item.completed .ti-desc { opacity: 0.5 !important; }
+
 #abnerTaskModule .ti-content {
   flex: 1 1 auto !important;
   min-width: 0 !important;
   display: flex !important;
   flex-direction: column !important;
+  align-items: stretch !important;
+  text-align: right !important;
   gap: 3px !important;
 }
+
 #abnerTaskModule .ti-title {
   font-size: 13.5px !important;
   font-weight: 700 !important;
   color: #fff !important;
   word-break: break-word !important;
   line-height: 1.4 !important;
+  text-align: right !important;
 }
 #abnerTaskModule .ti-desc {
   font-size: 11.5px !important;
@@ -260,65 +265,118 @@ body.theme-light { --glass-rgba: 255, 252, 245; }
   color: rgba(255, 255, 255, 0.62) !important;
   line-height: 1.5 !important;
   word-break: break-word !important;
-  
-  /* 👇 فقط خط اول نمایش داده بشه */
   white-space: nowrap !important;
   overflow: hidden !important;
   text-overflow: ellipsis !important;
+  text-align: right !important;
 }
+
+/* ============================================================
+   🎯 بج‌های تسک — چیدمان از راست، افقی، با wrap
+============================================================ */
 #abnerTaskModule .ti-badges {
   display: flex !important;
+  flex-direction: row !important;
   flex-wrap: wrap !important;
-  gap: 4px !important;
-  margin-top: 3px !important;
-}
-#abnerTaskModule .ti-badge {
-  display: inline-flex !important;
   align-items: center !important;
-  gap: 3px !important;
-  padding: 2px 7px !important;
-  border-radius: 7px !important;
+  align-content: flex-start !important;
+  justify-content: flex-start !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  gap: 5px !important;
+  margin: 5px 0 0 0 !important;
+  padding: 0 !important;
+  box-sizing: border-box !important;
+  direction: rtl !important;
+  text-align: right !important;
+  overflow: visible !important;
+}
+
+#abnerTaskModule .ti-badges > .ti-badge {
+  display: inline-flex !important;
+  flex: 0 0 auto !important;
+  align-items: center !important;
+  gap: 4px !important;
+  padding: 3px 8px !important;
+  border-radius: 8px !important;
   font-size: 10.5px !important;
-  font-weight: 700 !important;
-  background: rgba(255, 255, 255, 0.08) !important;
-  color: rgba(255, 255, 255, 0.85) !important;
+  font-weight: 800 !important;
+  line-height: 1.3 !important;
   white-space: nowrap !important;
+  width: auto !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  border: 1px solid transparent !important;
+  box-sizing: border-box !important;
+  transition: transform 0.15s ease !important;
 }
-#abnerTaskModule .ti-badge.prio { background: rgba(255, 255, 255, 0.08) !important; }
-#abnerTaskModule .ti-badge.due { color: #93c5fd !important; background: rgba(59, 130, 246, 0.15) !important; }
-#abnerTaskModule .ti-badge.due.past { color: #fca5a5 !important; background: rgba(239, 68, 68, 0.15) !important; }
-#abnerTaskModule .ti-badge.tag {
-  background: color-mix(in srgb, var(--tag-color) 20%, transparent) !important;
-  color: var(--tag-color) !important;
-}
-#abnerTaskModule .ti-badge.recur { color: #a78bfa !important; background: rgba(167, 139, 250, 0.15) !important; }
-#abnerTaskModule .ti-badge.time { color: #93c5fd !important; background: rgba(59, 130, 246, 0.15) !important; }
-#abnerTaskModule .ti-dot {
-  width: 7px !important;
-  height: 7px !important;
+#abnerTaskModule .ti-badges > .ti-badge:hover { transform: translateY(-1px); }
+
+#abnerTaskModule .ti-badges > .ti-badge > .ti-dot {
+  display: inline-block !important;
+  width: 6px !important;
+  height: 6px !important;
   border-radius: 50% !important;
   flex-shrink: 0 !important;
-  display: inline-block !important;
+  margin: 0 !important;
 }
-#abnerTaskModule .ti-badge-x {
+#abnerTaskModule .ti-badges > .ti-badge > svg {
+  width: 10px !important;
+  height: 10px !important;
+  flex-shrink: 0 !important;
+}
+#abnerTaskModule .ti-badges > .ti-badge > .ti-badge-x {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
   width: 14px !important;
   height: 14px !important;
-  margin-inline-start: 3px !important;
-  border-radius: 50% !important;
+  margin: 0 3px 0 0 !important;
+  padding: 0 !important;
   border: none !important;
+  border-radius: 50% !important;
   background: rgba(255, 255, 255, 0.15) !important;
   color: #fff !important;
   font-size: 11px !important;
   line-height: 1 !important;
   cursor: pointer !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  padding: 0 !important;
-  transition: background 0.15s !important;
+  flex-shrink: 0 !important;
 }
-#abnerTaskModule .ti-badge-x:hover { background: rgba(239, 68, 68, 0.6) !important; }
+#abnerTaskModule .ti-badges > .ti-badge > .ti-badge-x:hover {
+  background: rgba(239, 68, 68, 0.6) !important;
+}
 
+/* رنگ‌های هر نوع بج */
+#abnerTaskModule .ti-badge.prio {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: rgba(255, 255, 255, 0.88) !important;
+}
+#abnerTaskModule .ti-badge.due {
+  color: #93c5fd !important;
+  background: rgba(59, 130, 246, 0.15) !important;
+}
+#abnerTaskModule .ti-badge.due.past {
+  color: #fca5a5 !important;
+  background: rgba(239, 68, 68, 0.15) !important;
+}
+#abnerTaskModule .ti-badge.tag {
+  background: color-mix(in srgb, var(--tag-color) 20%, transparent) !important;
+  color: var(--tag-color) !important;
+}
+#abnerTaskModule .ti-badge.recur {
+  color: #a78bfa !important;
+  background: rgba(167, 139, 250, 0.15) !important;
+}
+#abnerTaskModule .ti-badge.time {
+  color: #93c5fd !important;
+  background: rgba(59, 130, 246, 0.15) !important;
+}
+#abnerTaskModule .ti-badge.board {
+  background: color-mix(in srgb, var(--board-color) 20%, transparent) !important;
+  color: var(--board-color) !important;
+}
+
+/* ---------- دکمه‌های action (مداد + سطل) ---------- */
 #abnerTaskModule .ti-action {
   flex-shrink: 0 !important;
   width: 26px !important;
@@ -339,6 +397,10 @@ body.theme-light { --glass-rgba: 255, 252, 245; }
 #abnerTaskModule .ti-action:hover {
   background: rgba(239, 68, 68, 0.18) !important;
   color: #f87171 !important;
+}
+#abnerTaskModule .ti-action[data-act="edit"]:hover {
+  background: rgba(59, 130, 246, 0.18) !important;
+  color: #60a5fa !important;
 }
 #abnerTaskModule .note-item .ti-action[data-act="pin"]:hover {
   background: rgba(59, 130, 246, 0.18) !important;
@@ -392,13 +454,9 @@ body.theme-light { --glass-rgba: 255, 252, 245; }
   min-height: 18px !important;
   white-space: pre-wrap !important;
   word-break: break-word !important;
-  
-  /* 👇 مخفی کردن اسکرول‌بار (اسکرول کار میکنه، فقط دیده نمیشه) */
-  scrollbar-width: none !important;       /* Firefox */
-  -ms-overflow-style: none !important;    /* IE/Edge */
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
 }
-
-/* Chrome / Safari / Edge */
 #abnerTaskModule .tn-desc::-webkit-scrollbar {
   display: none !important;
   width: 0 !important;
@@ -410,22 +468,23 @@ body.theme-light { --glass-rgba: 255, 252, 245; }
   align-items: center !important;
   gap: 5px !important;
   width: 100% !important;
-  flex-wrap: nowrap !important;
+  flex-wrap: wrap !important;
 }
 #abnerTaskModule .task-new-input-wrap .tn-icon {
-  width: 30px !important;
-  height: 30px !important;
-  min-width: 30px !important;
+  width: auto !important;
+  min-width: 32px !important;
+  height: 32px !important;
+  padding: 0 10px !important;
+  gap: 5px !important;
   border-radius: 9px !important;
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
   background: transparent !important;
   color: rgba(255, 255, 255, 0.7) !important;
   cursor: pointer !important;
-  display: flex !important;
+  display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
   transition: all 0.2s !important;
-  padding: 0 !important;
   flex-shrink: 0 !important;
 }
 #abnerTaskModule .task-new-input-wrap .tn-icon:hover {
@@ -437,6 +496,13 @@ body.theme-light { --glass-rgba: 255, 252, 245; }
   border-color: rgba(59, 130, 246, 0.5) !important;
   color: #3b82f6 !important;
 }
+#abnerTaskModule .task-new-input-wrap .tn-icon .tn-label {
+  font-size: 11.5px;
+  font-weight: 800;
+  white-space: nowrap;
+  font-family: inherit;
+}
+#abnerTaskModule .task-new-input-wrap .tn-icon svg { flex-shrink: 0; }
 #abnerTaskModule .task-new-input-wrap .tn-submit {
   margin-inline-start: auto !important;
   width: 34px !important;
@@ -461,7 +527,7 @@ body.theme-light { --glass-rgba: 255, 252, 245; }
 }
 
 /* ============================================================
-   Inline Popover (خارج از task-module → در body)
+   Inline Popover
 ============================================================ */
 .tasks-inline-popover {
   position: fixed;
@@ -526,7 +592,6 @@ body.theme-light { --glass-rgba: 255, 252, 245; }
   box-shadow: 0 0 8px currentColor;
 }
 
-/* Tag List */
 .ip-tag-list {
   display: flex;
   flex-direction: column;
@@ -752,7 +817,7 @@ body.theme-light { --glass-rgba: 255, 252, 245; }
   justify-content: space-between;
   gap: 8px;
   margin-bottom: 12px;
-  direction: ltr; /* ⬅️ مهم: برای جابجایی فلش‌ها */
+  direction: ltr;
 }
 .dp-nav {
   width: 32px;
@@ -767,7 +832,7 @@ body.theme-light { --glass-rgba: 255, 252, 245; }
   justify-content: center;
   transition: all 0.2s;
   padding: 0;
-  transform: scaleX(-1); /* ⬅️ معکوس کردن آیکون */
+  transform: scaleX(-1);
 }
 .dp-nav:hover {
   background: rgba(255, 255, 255, 0.15);
@@ -868,7 +933,7 @@ body.theme-light { --glass-rgba: 255, 252, 245; }
 .dp-btn-confirm:hover { background: #2563eb; }
 
 /* ============================================================
-   Panel Popovers (more / filter / sort)
+   Panel Popovers
 ============================================================ */
 .task-panel-pop {
   min-width: 240px !important;
@@ -1048,9 +1113,9 @@ body.theme-light { --glass-rgba: 255, 252, 245; }
   direction: rtl;
   animation: recScaleIn 0.25s cubic-bezier(0.2, 0.9, 0.3, 1.2);
   transform: translateZ(0);
+  scrollbar-width: none !important;
 }
 .recurring-modal::-webkit-scrollbar { display: none !important; width: 0 !important; height: 0 !important; }
-.recurring-modal { scrollbar-width: none !important; }
 @keyframes recScaleIn {
   from { opacity: 0; transform: translateY(20px) scale(0.96); }
   to   { opacity: 1; transform: translateY(0) scale(1); }
@@ -1306,8 +1371,342 @@ body.theme-light { --glass-rgba: 255, 252, 245; }
 }
 .recur-btn-confirm:hover { background: #2563eb; }
 
+/* recurring actions با دکمه حذف تکرار */
+.recurring-actions.has-clear {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.recurring-actions.has-clear .recur-btn-confirm {
+  grid-column: span 2;
+  order: -1;
+}
+.recur-btn-clear {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 11px;
+  border-radius: 13px;
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 800;
+  cursor: pointer;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  background: rgba(239, 68, 68, 0.12);
+  color: #fca5a5;
+  transition: all 0.2s;
+}
+.recur-btn-clear:hover {
+  background: rgba(239, 68, 68, 0.25);
+  color: #fff;
+}
+
 /* ============================================================
-   لایت
+   Edit Task Modal
+============================================================ */
+.edit-task-overlay {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 9999999 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 20px !important;
+  background: rgba(10, 15, 30, 0.35) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  animation: editFadeIn 0.2s ease;
+}
+.edit-task-overlay.hidden { display: none !important; }
+@keyframes editFadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.edit-task-modal {
+  width: 100%;
+  max-width: 520px;
+  max-height: 95vh;
+  padding: 22px 20px 18px;
+  border-radius: 24px;
+  background: rgba(var(--glass-rgba, 255, 255, 255), var(--glass-opacity, 0.28)) !important;
+  backdrop-filter: blur(var(--dash-blur-px, 16px)) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(var(--dash-blur-px, 16px)) saturate(180%) !important;
+  border: 1px solid var(--dash-glass-border, rgba(255, 255, 255, 0.28)) !important;
+  box-shadow:
+    0 24px 60px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
+  color: #f8fafc;
+  direction: rtl;
+  position: relative;
+  animation: editScaleIn 0.25s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+  transform: translateZ(0);
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+.edit-task-modal::-webkit-scrollbar { display: none; width: 0; height: 0; }
+@keyframes editScaleIn {
+  from { opacity: 0; transform: translateY(20px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.edit-task-close {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: inherit;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+  padding: 0;
+}
+.edit-task-close:hover { background: rgba(239, 68, 68, 0.6); color: #fff; }
+.edit-task-title {
+  margin: 0 0 18px;
+  font-size: 18px;
+  font-weight: 900;
+  text-align: center;
+  color: #fff;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+}
+.edit-task-inputs {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.edit-task-title-input,
+.edit-task-desc-input {
+  width: 100%;
+  box-sizing: border-box;
+  background: rgba(255, 255, 255, 0.08) !important;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  border-radius: 12px;
+  padding: 11px 14px;
+  color: #ffffff !important;
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  outline: none;
+  transition: border-color 0.2s, background 0.2s;
+}
+.edit-task-title-input::placeholder,
+.edit-task-desc-input::placeholder { color: rgba(255, 255, 255, 0.45); }
+.edit-task-title-input:focus,
+.edit-task-desc-input:focus {
+  border-color: rgba(59, 130, 246, 0.6) !important;
+  background: rgba(255, 255, 255, 0.14) !important;
+}
+.edit-task-desc-input {
+  resize: none !important;
+  min-height: 80px;
+  max-height: 160px;
+  overflow-y: auto;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+  scrollbar-width: none;
+}
+.edit-task-desc-input::-webkit-scrollbar { display: none; width: 0; height: 0; }
+.edit-task-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding: 10px 0;
+  margin-bottom: 6px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+.edit-task-toolbar .tn-icon {
+  width: auto !important;
+  min-width: 34px !important;
+  height: 34px !important;
+  padding: 0 10px !important;
+  gap: 5px !important;
+  border-radius: 10px !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  background: transparent !important;
+  color: rgba(255, 255, 255, 0.7) !important;
+  cursor: pointer !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: all 0.2s !important;
+  flex-shrink: 0 !important;
+}
+.edit-task-toolbar .tn-icon:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: #fff !important;
+}
+.edit-task-toolbar .tn-icon.active {
+  background: rgba(59, 130, 246, 0.15) !important;
+  border-color: rgba(59, 130, 246, 0.5) !important;
+  color: #3b82f6 !important;
+}
+.edit-task-toolbar .tn-icon .tn-label {
+  font-size: 11.5px;
+  font-weight: 800;
+  white-space: nowrap;
+  font-family: inherit;
+}
+.edit-task-toolbar .tn-icon svg { flex-shrink: 0; }
+.edit-task-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 8px;
+}
+.edit-task-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 11px;
+  border-radius: 13px;
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 800;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+}
+.edit-task-btn-delete {
+  flex: 0 0 auto;
+  min-width: 100px;
+  background: rgba(239, 68, 68, 0.12);
+  color: #fca5a5;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+}
+.edit-task-btn-delete:hover {
+  background: rgba(239, 68, 68, 0.25);
+  color: #fff;
+}
+.edit-task-btn-save {
+  background: #3b82f6;
+  color: #fff;
+  box-shadow: 0 6px 18px rgba(59, 130, 246, 0.4);
+}
+.edit-task-btn-save:hover { background: #2563eb; }
+
+/* ============================================================
+   Undo Toast
+============================================================ */
+.abner-undo-toast {
+  position: fixed;
+  bottom: 90px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  z-index: 99999999;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-width: 340px;
+  max-width: calc(100vw - 40px);
+  padding: 12px 16px;
+  border-radius: 18px;
+  background: rgba(var(--glass-rgba, 255, 255, 255), var(--glass-opacity, 0.15)) !important;
+  backdrop-filter: blur(var(--dash-blur-px, 20px)) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(var(--dash-blur-px, 20px)) saturate(180%) !important;
+  border: 1px solid var(--dash-glass-border, rgba(255, 255, 255, 0.28)) !important;
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
+  color: #f8fafc;
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 700;
+  opacity: 0;
+  transition: opacity 0.25s ease, transform 0.25s cubic-bezier(0.2, 0.9, 0.3, 1.1);
+  direction: rtl;
+  pointer-events: none;
+}
+.abner-undo-toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+  pointer-events: auto;
+}
+.undo-toast-message {
+  flex: 1;
+  text-align: right;
+  font-size: 14px;
+  font-weight: 800;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+.undo-toast-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border-radius: 10px;
+  background: rgba(59, 130, 246, 0.18);
+  color: #93c5fd;
+  border: 1px solid rgba(59, 130, 246, 0.4);
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+.undo-toast-action:hover {
+  background: rgba(59, 130, 246, 0.32);
+  color: #fff;
+}
+.undo-toast-action svg { flex-shrink: 0; }
+.undo-toast-key {
+  font-size: 10.5px;
+  padding: 2px 6px;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.12);
+  font-family: 'Courier New', monospace;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+
+/* ============================================================
+   Sync Status Badge
+============================================================ */
+.sync-status-badge {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  padding: 6px 12px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 800;
+  background: rgba(59, 130, 246, 0.85);
+  color: #fff;
+  backdrop-filter: blur(10px);
+  z-index: 9999;
+  display: none;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+.sync-status-badge.visible { display: inline-flex; }
+.sync-status-badge .dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: #fbbf24;
+  animation: syncPulse 1.2s infinite;
+}
+@keyframes syncPulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+/* ============================================================
+   تم لایت
 ============================================================ */
 body.theme-light #abnerTaskModule .tab-btn { color: rgba(42, 31, 20, 0.65) !important; }
 body.theme-light #abnerTaskModule .tab-btn.active { color: #fff !important; }
@@ -1343,7 +1742,6 @@ body.theme-light #abnerTaskModule .tn-icon {
   border-color: rgba(0, 0, 0, 0.12) !important;
   color: rgba(42, 31, 20, 0.7) !important;
 }
-
 body.theme-light .tasks-inline-popover {
   background: rgba(255, 252, 245, var(--glass-opacity, 0.28)) !important;
   border-color: rgba(120, 90, 50, 0.22) !important;
@@ -1431,276 +1829,11 @@ body.theme-light .recur-btn-cancel {
   border-color: rgba(0, 0, 0, 0.12);
   color: #2a1f14;
 }
-
-/* ============================================================
-   دارک
-============================================================ */
-body.theme-dark .tasks-inline-popover,
-body.theme-dark .task-panel-pop,
-body.theme-dark .rd-menu {
-  background: rgba(15, 23, 42, var(--glass-opacity, 0.5)) !important;
-  border-color: rgba(255, 255, 255, 0.15) !important;
+body.theme-light .recur-btn-clear {
+  background: rgba(239, 68, 68, 0.1);
+  color: #dc2626;
+  border-color: rgba(239, 68, 68, 0.3);
 }
-body.theme-dark .recurring-modal {
-  background: rgba(15, 23, 42, var(--glass-opacity, 0.5)) !important;
-  border-color: rgba(255, 255, 255, 0.15) !important;
-}
-
-/* ============================================================
-   موبایل
-============================================================ */
-@media (max-width: 1024px) {
-  #abnerTaskModule { padding: 14px !important; }
-  #abnerTaskModule .ti-title { font-size: 13px !important; }
-  #abnerTaskModule input.tn-title { font-size: 13px !important; }
-  #abnerTaskModule .tn-icon { width: 28px !important; height: 28px !important; min-width: 28px !important; }
-  #abnerTaskModule .tn-submit { width: 32px !important; height: 32px !important; min-width: 32px !important; }
-  .task-panel-pop { min-width: 220px !important; max-width: calc(100vw - 20px) !important; }
-}
-
-@media (max-width: 480px) {
-  .tasks-inline-popover {
-    width: calc(100vw - 24px) !important;
-    max-width: calc(100vw - 24px) !important;
-  }
-  .date-picker-popover,
-  .time-picker-popover {
-    width: calc(100vw - 24px) !important;
-  }
-  .tp-cols { height: 160px; }
-  .tp-item { height: 32px; min-height: 32px; font-size: 15px; }
-  .tp-item.active { font-size: 19px; }
-  .tp-scroll { padding: 64px 0; }
-  .dp-cell { font-size: 11.5px; border-radius: 8px; }
-  .dp-wd { font-size: 9px; }
-  .dp-actions { flex-direction: column; }
-  .dp-btn { min-width: 0; }
-  .ip-tag-list { max-height: 180px; }
-
-  .recurring-overlay { padding: 12px !important; align-items: flex-start !important; padding-top: 30px !important; }
-  .recurring-modal { padding: 18px 14px 14px; border-radius: 20px; max-width: none; }
-  .recurring-title { font-size: 16px; margin-bottom: 14px; padding-bottom: 10px; }
-  .recurring-row { flex-wrap: wrap; gap: 8px; }
-  .recurring-label { font-size: 12px; }
-  .recur-weekdays { grid-template-columns: repeat(2, 1fr); }
-  .recur-days-grid { gap: 4px; }
-  .recur-pill-num { font-size: 11px; }
-  .recur-pill-month { font-size: 11px; padding: 8px 4px; }
-  .recur-btn-cancel, .recur-btn-confirm { font-size: 13px; padding: 10px; }
-}
-/* ============================================================
-   🆕 دکمه ویرایش تسک (مداد)
-============================================================ */
-#abnerTaskModule .ti-action[data-act="edit"]:hover {
-  background: rgba(59, 130, 246, 0.18) !important;
-  color: #60a5fa !important;
-}
-#abnerTaskModule .task-item:hover .ti-action[data-act="edit"] {
-  opacity: 1 !important;
-}
-
-/* ============================================================
-   🆕 مودال ویرایش تسک
-============================================================ */
-.edit-task-overlay {
-  position: fixed !important;
-  inset: 0 !important;
-  z-index: 9999999 !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  padding: 20px !important;
-  background: rgba(10, 15, 30, 0.35) !important;
-  backdrop-filter: blur(8px) !important;
-  -webkit-backdrop-filter: blur(8px) !important;
-  animation: editFadeIn 0.2s ease;
-}
-.edit-task-overlay.hidden { display: none !important; }
-
-@keyframes editFadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-.edit-task-modal {
-  width: 100%;
-  max-width: 520px;
-  max-height: 95vh;
-  padding: 22px 20px 18px;
-  border-radius: 24px;
-  background: rgba(var(--glass-rgba, 255, 255, 255), var(--glass-opacity, 0.28)) !important;
-  backdrop-filter: blur(var(--dash-blur-px, 16px)) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(var(--dash-blur-px, 16px)) saturate(180%) !important;
-  border: 1px solid var(--dash-glass-border, rgba(255, 255, 255, 0.28)) !important;
-  box-shadow:
-    0 24px 60px rgba(0, 0, 0, 0.5),
-    inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
-  color: #f8fafc;
-  direction: rtl;
-  position: relative;
-  animation: editScaleIn 0.25s cubic-bezier(0.2, 0.9, 0.3, 1.2);
-  transform: translateZ(0);
-  overflow-y: auto;
-  scrollbar-width: none;
-}
-.edit-task-modal::-webkit-scrollbar { display: none; width: 0; height: 0; }
-@keyframes editScaleIn {
-  from { opacity: 0; transform: translateY(20px) scale(0.96); }
-  to   { opacity: 1; transform: translateY(0) scale(1); }
-}
-
-.edit-task-close {
-  position: absolute;
-  top: 12px;
-  left: 12px;
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.1);
-  border: none;
-  color: inherit;
-  font-size: 20px;
-  line-height: 1;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.15s;
-  padding: 0;
-}
-.edit-task-close:hover { background: rgba(239, 68, 68, 0.6); color: #fff; }
-
-.edit-task-title {
-  margin: 0 0 18px;
-  font-size: 18px;
-  font-weight: 900;
-  text-align: center;
-  color: #fff;
-  padding-bottom: 14px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
-}
-
-.edit-task-inputs {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-bottom: 14px;
-}
-
-.edit-task-title-input,
-.edit-task-desc-input {
-  width: 100%;
-  box-sizing: border-box;
-  background: rgba(255, 255, 255, 0.08) !important;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.2) !important;
-  border-radius: 12px;
-  padding: 11px 14px;
-  color: #ffffff !important;
-  font-family: inherit;
-  font-size: 13.5px;
-  font-weight: 600;
-  outline: none;
-  transition: border-color 0.2s, background 0.2s;
-}
-.edit-task-title-input::placeholder,
-.edit-task-desc-input::placeholder { color: rgba(255, 255, 255, 0.45); }
-.edit-task-title-input:focus,
-.edit-task-desc-input:focus {
-  border-color: rgba(59, 130, 246, 0.6) !important;
-  background: rgba(255, 255, 255, 0.14) !important;
-}
-
-.edit-task-desc-input {
-  resize: none !important;
-  min-height: 80px;
-  max-height: 160px;
-  overflow-y: auto;
-  line-height: 1.5;
-  white-space: pre-wrap;
-  word-break: break-word;
-  scrollbar-width: none;
-}
-.edit-task-desc-input::-webkit-scrollbar { display: none; width: 0; height: 0; }
-
-.edit-task-toolbar {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
-  padding: 10px 0;
-  margin-bottom: 6px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.edit-task-toolbar .tn-icon {
-  width: 34px !important;
-  height: 34px !important;
-  min-width: 34px !important;
-  border-radius: 10px !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  background: transparent !important;
-  color: rgba(255, 255, 255, 0.7) !important;
-  cursor: pointer !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  transition: all 0.2s !important;
-  padding: 0 !important;
-  flex-shrink: 0 !important;
-}
-.edit-task-toolbar .tn-icon:hover {
-  background: rgba(255, 255, 255, 0.1) !important;
-  color: #fff !important;
-}
-.edit-task-toolbar .tn-icon.active {
-  background: rgba(59, 130, 246, 0.15) !important;
-  border-color: rgba(59, 130, 246, 0.5) !important;
-  color: #3b82f6 !important;
-}
-
-.edit-task-actions {
-  display: flex;
-  gap: 10px;
-  margin-top: 8px;
-}
-
-.edit-task-btn {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 11px;
-  border-radius: 13px;
-  font-family: inherit;
-  font-size: 13.5px;
-  font-weight: 800;
-  cursor: pointer;
-  border: none;
-  transition: all 0.2s;
-}
-
-.edit-task-btn-delete {
-  flex: 0 0 auto;
-  min-width: 100px;
-  background: rgba(239, 68, 68, 0.12);
-  color: #fca5a5;
-  border: 1px solid rgba(239, 68, 68, 0.35);
-}
-.edit-task-btn-delete:hover {
-  background: rgba(239, 68, 68, 0.25);
-  color: #fff;
-}
-
-.edit-task-btn-save {
-  background: #3b82f6;
-  color: #fff;
-  box-shadow: 0 6px 18px rgba(59, 130, 246, 0.4);
-}
-.edit-task-btn-save:hover { background: #2563eb; }
-
-/* ============ تم لایت ============ */
 body.theme-light .edit-task-modal {
   background: rgba(255, 252, 245, var(--glass-opacity, 0.28)) !important;
   border-color: rgba(120, 90, 50, 0.22) !important;
@@ -1722,12 +1855,8 @@ body.theme-light .edit-task-desc-input {
   color: #2a1f14 !important;
 }
 body.theme-light .edit-task-title-input::placeholder,
-body.theme-light .edit-task-desc-input::placeholder {
-  color: rgba(42, 31, 20, 0.4);
-}
-body.theme-light .edit-task-toolbar {
-  border-color: rgba(0, 0, 0, 0.08);
-}
+body.theme-light .edit-task-desc-input::placeholder { color: rgba(42, 31, 20, 0.4); }
+body.theme-light .edit-task-toolbar { border-color: rgba(0, 0, 0, 0.08); }
 body.theme-light .edit-task-toolbar .tn-icon {
   border-color: rgba(0, 0, 0, 0.12) !important;
   color: rgba(42, 31, 20, 0.7) !important;
@@ -1737,208 +1866,63 @@ body.theme-light .edit-task-btn-delete {
   color: #dc2626;
   border-color: rgba(239, 68, 68, 0.3);
 }
-
-/* ============ تم دارک ============ */
-body.theme-dark .edit-task-modal {
-  background: rgba(15, 23, 42, var(--glass-opacity, 0.5)) !important;
-  border-color: rgba(255, 255, 255, 0.15) !important;
-}
-
-/* ============ موبایل ============ */
-@media (max-width: 1024px) {
-  .edit-task-modal { padding: 18px 16px 14px; max-width: 460px; }
-  .edit-task-title { font-size: 16px; margin-bottom: 14px; padding-bottom: 10px; }
-  .edit-task-toolbar .tn-icon { width: 32px !important; height: 32px !important; min-width: 32px !important; }
-}
-@media (max-width: 480px) {
-  .edit-task-overlay { padding: 10px !important; align-items: flex-start !important; padding-top: 20px !important; }
-  .edit-task-modal { padding: 16px 12px 12px; border-radius: 20px; max-width: none; }
-  .edit-task-title { font-size: 15px; }
-  .edit-task-actions { flex-direction: column-reverse; }
-  .edit-task-btn-delete { min-width: 0; width: 100%; }
-}
-/* ============================================================
-   🆕 متن کنار آیکون‌ها در toolbar
-============================================================ */
-#abnerTaskModule .tn-toolbar .tn-icon,
-.edit-task-toolbar .tn-icon {
-  width: auto !important;
-  min-width: 32px !important;
-  height: 32px !important;
-  padding: 0 10px !important;
-  gap: 5px !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-}
-#abnerTaskModule .tn-toolbar .tn-icon .tn-label,
-.edit-task-toolbar .tn-icon .tn-label {
-  font-size: 11.5px;
-  font-weight: 800;
-  white-space: nowrap;
-  font-family: inherit;
-}
-#abnerTaskModule .tn-toolbar .tn-icon svg,
-.edit-task-toolbar .tn-icon svg {
-  flex-shrink: 0;
-}
-/* wrap در صورت کوچک بودن صفحه */
-#abnerTaskModule .tn-toolbar,
-.edit-task-toolbar {
-  flex-wrap: wrap !important;
-}
-
-/* ============================================================
-   🆕 Badge بورد
-============================================================ */
-#abnerTaskModule .ti-badge.board {
-  background: color-mix(in srgb, var(--board-color) 20%, transparent) !important;
-  color: var(--board-color) !important;
-}
-
-/* ============================================================
-   🆕 Toast بازگرداندن حذف
-============================================================ */
-.abner-undo-toast {
-  position: fixed;
-  bottom: 90px;
-  left: 50%;
-  transform: translateX(-50%) translateY(20px);
-  z-index: 99999999;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  min-width: 340px;
-  max-width: calc(100vw - 40px);
-  padding: 14px 18px;
-  border-radius: 16px;
-  background: rgba(var(--glass-rgba, 15, 23, 42), 0.85) !important;
-  backdrop-filter: blur(var(--dash-blur-px, 16px)) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(var(--dash-blur-px, 16px)) saturate(180%) !important;
-  border: 1px solid var(--dash-glass-border, rgba(255, 255, 255, 0.2)) !important;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
-  color: #f8fafc;
-  font-family: inherit;
-  font-size: 13.5px;
-  font-weight: 700;
-  opacity: 0;
-  transition: opacity 0.25s ease, transform 0.25s cubic-bezier(0.2, 0.9, 0.3, 1.1);
-  direction: rtl;
-  pointer-events: none;
-}
-.abner-undo-toast.show {
-  opacity: 1;
-  transform: translateX(-50%) translateY(0);
-  pointer-events: auto;
-}
-.undo-toast-message {
-  flex: 1;
-  text-align: right;
-  font-size: 14px;
-  font-weight: 800;
-}
-.undo-toast-action {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 12px;
-  border-radius: 10px;
-  background: rgba(59, 130, 246, 0.15);
-  color: #93c5fd;
-  border: 1px solid rgba(59, 130, 246, 0.4);
-  font-family: inherit;
-  font-size: 12.5px;
-  font-weight: 800;
-  cursor: pointer;
-  transition: background 0.15s, color 0.15s;
-  white-space: nowrap;
-}
-.undo-toast-action:hover {
-  background: rgba(59, 130, 246, 0.3);
-  color: #fff;
-}
-.undo-toast-action svg { flex-shrink: 0; }
-.undo-toast-key {
-  font-size: 10.5px;
-  padding: 2px 6px;
-  border-radius: 5px;
-  background: rgba(255, 255, 255, 0.12);
-  font-family: 'Courier New', monospace;
-  font-weight: 700;
-  letter-spacing: 0.3px;
-}
-
-/* ============================================================
-   🆕 دکمه حذف تکرار
-============================================================ */
-.recurring-actions.has-clear {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-}
-.recurring-actions.has-clear .recur-btn-confirm {
-  grid-column: span 2;
-  order: -1;
-}
-.recur-btn-clear {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 11px;
-  border-radius: 13px;
-  font-family: inherit;
-  font-size: 13.5px;
-  font-weight: 800;
-  cursor: pointer;
-  border: 1px solid rgba(239, 68, 68, 0.4);
-  background: rgba(239, 68, 68, 0.12);
-  color: #fca5a5;
-  transition: all 0.2s;
-}
-.recur-btn-clear:hover {
-  background: rgba(239, 68, 68, 0.25);
-  color: #fff;
-}
-
-/* ============================================================
-   تم لایت
-============================================================ */
 body.theme-light .abner-undo-toast {
-  background: rgba(255, 252, 245, 0.95) !important;
+  background: rgba(255, 252, 245, 0.55) !important;
+  backdrop-filter: blur(var(--dash-blur-px, 20px)) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(var(--dash-blur-px, 20px)) saturate(180%) !important;
   border-color: rgba(120, 90, 50, 0.25) !important;
   color: #2a1f14 !important;
-  box-shadow: 0 20px 50px rgba(80, 50, 20, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.6) !important;
+  box-shadow:
+    0 12px 40px rgba(80, 50, 20, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6) !important;
 }
+body.theme-light .undo-toast-message { text-shadow: none; }
 body.theme-light .undo-toast-action {
-  background: rgba(59, 130, 246, 0.1);
+  background: rgba(59, 130, 246, 0.15);
   color: #2563eb;
   border-color: rgba(59, 130, 246, 0.35);
 }
 body.theme-light .undo-toast-action:hover {
-  background: rgba(59, 130, 246, 0.22);
+  background: rgba(59, 130, 246, 0.28);
   color: #1d4ed8;
 }
 body.theme-light .undo-toast-key {
   background: rgba(0, 0, 0, 0.08);
   color: #2a1f14;
 }
-body.theme-light .recur-btn-clear {
-  background: rgba(239, 68, 68, 0.1);
-  color: #dc2626;
-  border-color: rgba(239, 68, 68, 0.3);
+body.theme-light #abnerTaskModule .ti-badge.prio {
+  background: rgba(100, 116, 139, 0.12) !important;
+  color: #475569 !important;
 }
-body.theme-light .edit-task-toolbar .tn-icon .tn-label,
-body.theme-light #abnerTaskModule .tn-toolbar .tn-icon .tn-label {
-  color: inherit;
+body.theme-light #abnerTaskModule .ti-badge.due,
+body.theme-light #abnerTaskModule .ti-badge.time {
+  background: rgba(37, 99, 235, 0.1) !important;
+  color: #2563eb !important;
+}
+body.theme-light #abnerTaskModule .ti-badge.recur {
+  background: rgba(124, 58, 237, 0.1) !important;
+  color: #7c3aed !important;
 }
 
 /* ============================================================
    تم دارک
 ============================================================ */
+body.theme-dark .tasks-inline-popover,
+body.theme-dark .task-panel-pop,
+body.theme-dark .rd-menu {
+  background: rgba(15, 23, 42, var(--glass-opacity, 0.5)) !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
+}
+body.theme-dark .recurring-modal {
+  background: rgba(15, 23, 42, var(--glass-opacity, 0.5)) !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
+}
+body.theme-dark .edit-task-modal {
+  background: rgba(15, 23, 42, var(--glass-opacity, 0.5)) !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
+}
 body.theme-dark .abner-undo-toast {
-  background: rgba(15, 23, 42, 0.95) !important;
+  background: rgba(15, 23, 42, 0.85) !important;
   border-color: rgba(255, 255, 255, 0.15) !important;
 }
 
@@ -1946,15 +1930,17 @@ body.theme-dark .abner-undo-toast {
    موبایل
 ============================================================ */
 @media (max-width: 1024px) {
-  #abnerTaskModule .tn-toolbar .tn-icon .tn-label,
-  .edit-task-toolbar .tn-icon .tn-label {
-    font-size: 10.5px;
-  }
-  #abnerTaskModule .tn-toolbar .tn-icon,
-  .edit-task-toolbar .tn-icon {
-    padding: 0 8px !important;
-    height: 30px !important;
-  }
+  #abnerTaskModule { padding: 14px !important; }
+  #abnerTaskModule .ti-title { font-size: 13px !important; }
+  #abnerTaskModule input.tn-title { font-size: 13px !important; }
+  #abnerTaskModule .task-new-input-wrap .tn-icon { min-width: 28px !important; height: 30px !important; padding: 0 8px !important; }
+  #abnerTaskModule .task-new-input-wrap .tn-icon .tn-label { font-size: 10.5px; }
+  #abnerTaskModule .tn-submit { width: 32px !important; height: 32px !important; min-width: 32px !important; }
+  .task-panel-pop { min-width: 220px !important; max-width: calc(100vw - 20px) !important; }
+  .edit-task-modal { padding: 18px 16px 14px; max-width: 460px; }
+  .edit-task-title { font-size: 16px; margin-bottom: 14px; padding-bottom: 10px; }
+  .edit-task-toolbar .tn-icon { min-width: 32px !important; height: 32px !important; padding: 0 8px !important; }
+  .edit-task-toolbar .tn-icon .tn-label { font-size: 10.5px; }
   .abner-undo-toast {
     bottom: 80px;
     min-width: 300px;
@@ -1963,7 +1949,42 @@ body.theme-dark .abner-undo-toast {
   }
   .undo-toast-message { font-size: 13px; }
 }
+
 @media (max-width: 480px) {
+  .tasks-inline-popover {
+    width: calc(100vw - 24px) !important;
+    max-width: calc(100vw - 24px) !important;
+  }
+  .date-picker-popover,
+  .time-picker-popover {
+    width: calc(100vw - 24px) !important;
+  }
+  .tp-cols { height: 160px; }
+  .tp-item { height: 32px; min-height: 32px; font-size: 15px; }
+  .tp-item.active { font-size: 19px; }
+  .tp-scroll { padding: 64px 0; }
+  .dp-cell { font-size: 11.5px; border-radius: 8px; }
+  .dp-wd { font-size: 9px; }
+  .dp-actions { flex-direction: column; }
+  .dp-btn { min-width: 0; }
+  .ip-tag-list { max-height: 180px; }
+  .recurring-overlay { padding: 12px !important; align-items: flex-start !important; padding-top: 30px !important; }
+  .recurring-modal { padding: 18px 14px 14px; border-radius: 20px; max-width: none; }
+  .recurring-title { font-size: 16px; margin-bottom: 14px; padding-bottom: 10px; }
+  .recurring-row { flex-wrap: wrap; gap: 8px; }
+  .recurring-label { font-size: 12px; }
+  .recur-weekdays { grid-template-columns: repeat(2, 1fr); }
+  .recur-days-grid { gap: 4px; }
+  .recur-pill-num { font-size: 11px; }
+  .recur-pill-month { font-size: 11px; padding: 8px 4px; }
+  .recur-btn-cancel, .recur-btn-confirm { font-size: 13px; padding: 10px; }
+  .recurring-actions.has-clear { grid-template-columns: 1fr; }
+  .recurring-actions.has-clear .recur-btn-confirm { grid-column: span 1; }
+  .edit-task-overlay { padding: 10px !important; align-items: flex-start !important; padding-top: 20px !important; }
+  .edit-task-modal { padding: 16px 12px 12px; border-radius: 20px; max-width: none; }
+  .edit-task-title { font-size: 15px; }
+  .edit-task-actions { flex-direction: column-reverse; }
+  .edit-task-btn-delete { min-width: 0; width: 100%; }
   .abner-undo-toast {
     bottom: 76px;
     flex-direction: column;
@@ -1974,70 +1995,4 @@ body.theme-dark .abner-undo-toast {
   }
   .undo-toast-message { font-size: 13px; text-align: center; width: 100%; }
   .undo-toast-action { width: 100%; justify-content: center; }
-  .recurring-actions.has-clear { grid-template-columns: 1fr; }
-  .recurring-actions.has-clear .recur-btn-confirm { grid-column: span 1; }
-}
-/* ============================================================
-   🆕 نشانگر وضعیت سینک (اختیاری)
-============================================================ */
-.sync-status-badge {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  padding: 6px 12px;
-  border-radius: 10px;
-  font-size: 11px;
-  font-weight: 800;
-  background: rgba(59, 130, 246, 0.85);
-  color: #fff;
-  backdrop-filter: blur(10px);
-  z-index: 9999;
-  display: none;
-  align-items: center;
-  gap: 6px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-}
-.sync-status-badge.visible { display: inline-flex; }
-.sync-status-badge .dot {
-  width: 6px; height: 6px; border-radius: 50%;
-  background: #fbbf24;
-  animation: syncPulse 1.2s infinite;
-}
-@keyframes syncPulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
-/* ============================================================
-   چیدمان افقی بج‌ها (رفع مشکل عمودی شدن)
-============================================================ */
-#abnerTaskModule .ti-badges {
-  display: flex !important;
-  flex-direction: row !important;
-  flex-wrap: wrap !important;
-  align-items: center !important;
-  justify-content: flex-start !important;
-  width: 100% !important;
-  max-width: 100% !important;
-  gap: 5px !important;
-  margin-top: 4px !important;
-  box-sizing: border-box !important;
-}
-
-#abnerTaskModule .ti-badges .ti-badge {
-  flex: 0 0 auto !important;
-  width: auto !important;
-  max-width: 100% !important;
-  white-space: nowrap !important;
-}
-
-#abnerTaskModule .ti-content {
-  flex: 1 1 auto !important;
-  min-width: 0 !important;
-  width: 100% !important;
-  max-width: 100% !important;
-  overflow: hidden !important;
-}
-
-#abnerTaskModule .ti-main {
-  width: 100% !important;
-  display: flex !important;
-  align-items: flex-start !important;
-  gap: 10px !important;
 }
