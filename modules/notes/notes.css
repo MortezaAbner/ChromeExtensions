@@ -1,19 +1,39 @@
-/* ============ ماژول یادداشت — آبنر ============ */
+/* ============ ماژول یادداشت — آبنر v4 ============ */
 
-/* کارت یادداشت با رنگ */
+/* ============================================================
+   🎯 مخفی کردن کامل اسکرول‌بار در همه‌جا
+============================================================ */
+* {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+*::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  background: transparent !important;
+}
+
+/* ============================================================
+   کارت یادداشت با رنگ
+============================================================ */
 #abnerTaskModule .task-item.note-item {
   background: var(--note-bg, rgba(255, 255, 255, 0.04)) !important;
   border-color: var(--note-border, rgba(255, 255, 255, 0.08)) !important;
   cursor: pointer !important;
 }
-#abnerTaskModule .task-item.note-item:hover {
-  filter: brightness(1.08);
-}
+#abnerTaskModule .task-item.note-item:hover { filter: brightness(1.08); }
 #abnerTaskModule .task-item.note-item.pinned {
   box-shadow: inset 0 0 0 1.5px rgba(59, 130, 246, 0.35);
 }
+#abnerTaskModule .ti-badge.attach {
+  color: #fbbf24 !important;
+  background: rgba(251, 191, 36, 0.15) !important;
+}
 
-/* باکس ورودی کلیکی در حالت یادداشت */
+/* ============================================================
+   باکس ورودی حالت یادداشت
+============================================================ */
 #abnerTaskModule .task-new-input-wrap.note-mode {
   cursor: pointer !important;
   min-height: 52px !important;
@@ -23,11 +43,20 @@
   padding: 14px 16px !important;
   transition: all 0.2s !important;
 }
+#abnerTaskModule .task-new-input-wrap.note-mode .tn-inputs,
+#abnerTaskModule .task-new-input-wrap.note-mode .tn-toolbar {
+  display: none !important;
+}
 #abnerTaskModule .task-new-input-wrap.note-mode::before {
   content: 'نوشتن یادداشت جدید...';
   color: rgba(255, 255, 255, 0.5);
   font-size: 13px;
   font-weight: 600;
+  font-family: inherit;
+  display: block;
+  width: 100%;
+  text-align: right;
+  pointer-events: none;
 }
 #abnerTaskModule .task-new-input-wrap.note-mode:hover {
   background: rgba(255, 255, 255, 0.08) !important;
@@ -38,7 +67,7 @@ body.theme-light #abnerTaskModule .task-new-input-wrap.note-mode::before {
 }
 
 /* ============================================================
-   Note Editor Modal
+   Note Editor Modal — شیشه‌ای با متغیرهای گلوبال
 ============================================================ */
 .note-editor-overlay {
   position: fixed !important;
@@ -59,12 +88,12 @@ body.theme-light #abnerTaskModule .task-new-input-wrap.note-mode::before {
 .note-editor-modal {
   position: relative;
   width: 100%;
-  max-width: 560px;
-  min-height: 400px;
-  max-height: 90vh;
+  max-width: 620px;
+  min-height: 420px;
+  max-height: 92vh;
   padding: 22px 20px 18px;
   border-radius: 24px;
-  background: var(--note-current-bg, rgba(255, 255, 255, 0.28)) !important;
+  background: var(--note-current-bg, rgba(var(--glass-rgba, 255, 255, 255), var(--glass-opacity, 0.28))) !important;
   backdrop-filter: blur(var(--dash-blur-px, 20px)) saturate(180%) !important;
   -webkit-backdrop-filter: blur(var(--dash-blur-px, 20px)) saturate(180%) !important;
   border: 1px solid var(--note-current-border, var(--dash-glass-border, rgba(255, 255, 255, 0.28))) !important;
@@ -102,27 +131,9 @@ body.theme-light #abnerTaskModule .task-new-input-wrap.note-mode::before {
   justify-content: center;
   transition: background 0.15s;
   padding: 0;
+  z-index: 20;
 }
 .note-editor-close:hover { background: rgba(239, 68, 68, 0.6); color: #fff; }
-
-.note-editor-new {
-  position: absolute;
-  top: 14px;
-  right: 14px;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: rgba(59, 130, 246, 0.2);
-  border: 1px solid rgba(59, 130, 246, 0.45);
-  color: #93c5fd;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.15s;
-  padding: 0;
-}
-.note-editor-new:hover { background: rgba(59, 130, 246, 0.35); color: #fff; }
 
 .note-editor-body {
   display: flex;
@@ -130,8 +141,8 @@ body.theme-light #abnerTaskModule .task-new-input-wrap.note-mode::before {
   gap: 8px;
   flex: 1;
   min-height: 0;
-  padding-top: 24px;
   overflow: hidden;
+  padding-top: 12px;
 }
 
 .note-editor-title {
@@ -152,8 +163,8 @@ body.theme-light #abnerTaskModule .task-new-input-wrap.note-mode::before {
 .note-editor-content {
   width: 100%;
   flex: 1;
-  min-height: 220px;
-  max-height: 400px;
+  min-height: 200px;
+  max-height: 380px;
   padding: 8px 4px;
   background: transparent !important;
   border: none !important;
@@ -163,271 +174,288 @@ body.theme-light #abnerTaskModule .task-new-input-wrap.note-mode::before {
   font-weight: 500;
   color: rgba(255, 255, 255, 0.92) !important;
   line-height: 1.7;
-  resize: none;
   direction: rtl;
   text-align: right;
   white-space: pre-wrap;
   word-break: break-word;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.25) transparent;
   overflow-y: auto;
+  cursor: text;
 }
-.note-editor-content::placeholder { color: rgba(255, 255, 255, 0.3); }
-.note-editor-content::-webkit-scrollbar { width: 5px; }
-.note-editor-content::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.25);
-  border-radius: 4px;
+.note-editor-content:empty::before {
+  content: attr(data-placeholder);
+  color: rgba(255, 255, 255, 0.3);
+  pointer-events: none;
 }
+.note-editor-content b, .note-editor-content strong { font-weight: 900; }
+.note-editor-content u { text-decoration: underline; }
+.note-editor-content i, .note-editor-content em { font-style: italic; }
+.note-editor-content ol, .note-editor-content ul {
+  padding-inline-start: 24px;
+  margin: 6px 0;
+}
+.note-editor-content li { margin: 3px 0; }
 
+/* چک‌باکس داخل متن */
+.note-editor-content .ncb {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 2px 0;
+}
+.note-editor-content .ncb-box {
+  cursor: pointer;
+  user-select: none;
+  font-size: 16px;
+  line-height: 1.5;
+  flex-shrink: 0;
+  color: #93c5fd;
+  padding: 0 2px;
+}
+.note-editor-content .ncb.checked .ncb-text {
+  text-decoration: line-through;
+  opacity: 0.6;
+}
+.note-editor-content .ncb-text { flex: 1; }
+
+/* ============================================================
+   لیست پیوست‌ها
+============================================================ */
+.note-attachments-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 4px 0;
+  flex-shrink: 0;
+}
+.note-attach-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px 6px 6px;
+  border-radius: 12px;
+  background: rgba(var(--glass-rgba, 255, 255, 255), var(--glass-opacity, 0.15));
+  border: 1px solid var(--dash-glass-border, rgba(255, 255, 255, 0.15));
+  max-width: 100%;
+  backdrop-filter: blur(var(--dash-blur-px, 12px)) saturate(150%);
+  -webkit-backdrop-filter: blur(var(--dash-blur-px, 12px)) saturate(150%);
+}
+.note-attach-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  overflow: hidden;
+  color: rgba(255, 255, 255, 0.8);
+}
+.note-attach-icon img { width: 100%; height: 100%; object-fit: cover; }
+.note-attach-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  max-width: 160px;
+}
+.note-attach-name {
+  font-size: 12px;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.92);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.note-attach-size {
+  font-size: 10.5px;
+  color: rgba(255, 255, 255, 0.5);
+  font-weight: 700;
+}
+.note-attach-remove {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(239, 68, 68, 0.2);
+  color: #fca5a5;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: 0;
+}
+.note-attach-remove:hover { background: rgba(239, 68, 68, 0.5); color: #fff; }
+
+/* ============================================================
+   Toolbar
+============================================================ */
 .note-editor-toolbar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 8px;
+  gap: 6px;
   padding-top: 10px;
   border-top: 1px solid rgba(255, 255, 255, 0.12);
   flex-shrink: 0;
-}
-.note-editor-toolbar .net-left {
-  display: flex;
-  align-items: center;
-  gap: 6px;
   flex-wrap: wrap;
 }
-.note-editor-toolbar .net-right {
-  display: flex;
+
+.note-editor-tool-btn {
+  display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
+  padding: 8px 11px;
+  border-radius: 10px;
+  border: 1px solid var(--dash-glass-border, rgba(255, 255, 255, 0.15));
+  background: rgba(var(--glass-rgba, 255, 255, 255), var(--glass-opacity, 0.15));
+  backdrop-filter: blur(var(--dash-blur-px, 12px)) saturate(150%);
+  -webkit-backdrop-filter: blur(var(--dash-blur-px, 12px)) saturate(150%);
+  color: rgba(255, 255, 255, 0.9);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+.note-editor-tool-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+}
+.note-editor-tool-btn.active {
+  background: rgba(59, 130, 246, 0.25);
+  border-color: rgba(59, 130, 246, 0.5);
+  color: #fff;
+}
+.note-editor-tool-btn svg { flex-shrink: 0; }
+.note-editor-tool-btn span {
+  font-size: 11.5px;
+  white-space: nowrap;
 }
 
 .note-editor-save {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 10px;
   border: none;
   background: #3b82f6;
   color: #fff;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 900;
   transition: all 0.2s;
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.45);
-  padding: 0;
+  margin-inline-start: auto;
   flex-shrink: 0;
 }
-.note-editor-save:hover { background: #2563eb; transform: scale(1.05); }
+.note-editor-save:hover { background: #2563eb; transform: translateY(-1px); }
+.note-editor-save svg { flex-shrink: 0; }
+.note-editor-save span { font-size: 12.5px; }
 
-.note-editor-icon {
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  background: rgba(255, 255, 255, 0.06);
-  color: rgba(255, 255, 255, 0.85);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
-  padding: 0;
-  flex-shrink: 0;
-}
-.note-editor-icon:hover {
-  background: rgba(255, 255, 255, 0.15);
-  color: #fff;
-}
-
-.note-editor-delete {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 8px 14px;
-  border-radius: 10px;
-  border: 1px solid rgba(239, 68, 68, 0.4);
-  background: rgba(239, 68, 68, 0.15);
-  color: #fca5a5;
-  font-family: inherit;
-  font-size: 12.5px;
-  font-weight: 800;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-.note-editor-delete:hover {
-  background: rgba(239, 68, 68, 0.28);
-  color: #fff;
-}
-
-/* پاپ‌آور داخل ادیتور */
-.note-editor-popover {
-  position: absolute;
-  bottom: 70px;
-  left: 20px;
-  right: 20px;
-  padding: 12px;
-  border-radius: 16px;
-  background: rgba(15, 25, 45, 0.55) !important;
-  backdrop-filter: blur(var(--dash-blur-px, 20px)) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(var(--dash-blur-px, 20px)) saturate(180%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.2) !important;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
-  z-index: 10;
-  color: #f8fafc;
-  animation: noteDropIn 0.18s ease;
-  max-height: 300px;
-  overflow-y: auto;
-  scrollbar-width: thin;
-}
-.note-editor-popover.hidden { display: none !important; }
-@keyframes noteDropIn {
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-.nep-title {
-  font-size: 12px;
-  font-weight: 800;
-  color: rgba(255, 255, 255, 0.7);
-  margin-bottom: 10px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.nep-color-grid {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 8px;
-}
-.nep-color-swatch {
-  width: 100%;
-  aspect-ratio: 1;
-  border-radius: 50%;
-  border: 2px solid;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #fff;
-  transition: all 0.2s;
-  padding: 0;
-}
-.nep-color-swatch:hover { transform: scale(1.1); }
-.nep-color-swatch.active {
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.4);
-}
-
-.nep-list {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-.nep-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 9px 12px;
-  border-radius: 10px;
-  border: none;
-  background: transparent;
-  color: rgba(255, 255, 255, 0.9);
-  font-family: inherit;
-  font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: background 0.15s;
-  text-align: right;
-  width: 100%;
-}
-.nep-item:hover { background: rgba(255, 255, 255, 0.14); }
-.nep-item.danger { color: #fca5a5; }
-.nep-item.danger:hover { background: rgba(239, 68, 68, 0.2); }
-
-.nep-divider {
+/* ============================================================
+   🎯 ip-divider برای پاپ‌آورهای یادداشت
+============================================================ */
+.tasks-inline-popover .ip-divider {
   height: 1px;
   background: rgba(255, 255, 255, 0.1);
-  margin: 4px 0;
+  margin: 6px 2px;
 }
 
-.nep-tag-list {
+/* ============================================================
+   رنگ‌های فیلتر (swatch)
+============================================================ */
+.nep-color-row {
   display: flex;
-  flex-direction: column;
-  gap: 3px;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 4px 2px;
 }
-.nep-tag-item {
+.nep-color-chip {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  background: var(--swatch-color, #94a3b8);
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.2s;
+  position: relative;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  opacity: 0.85;
+}
+.nep-color-chip:hover {
+  transform: scale(1.12);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+  opacity: 1;
+}
+.nep-color-chip.active {
+  box-shadow: 0 0 0 2.5px #3b82f6, 0 4px 12px rgba(59, 130, 246, 0.4);
+  transform: scale(1.08);
+  opacity: 1;
+}
+.nep-color-chip.active::after {
+  content: '✓';
+  position: absolute;
+  inset: 0;
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 9px 12px;
-  border-radius: 10px;
-  border: 1px solid transparent;
-  background: transparent;
-  color: rgba(255, 255, 255, 0.9);
-  font-family: inherit;
-  font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.15s;
-  text-align: right;
-  width: 100%;
-}
-.nep-tag-item:hover { background: rgba(255, 255, 255, 0.08); }
-.nep-tag-item.active {
-  background: rgba(59, 130, 246, 0.2);
-  border-color: rgba(59, 130, 246, 0.4);
-}
-.nep-tag-dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-.nep-tag-name {
-  flex: 1;
-  text-align: right;
+  justify-content: center;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 900;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.85);
+  pointer-events: none;
 }
 
-/* تم لایت */
+/* ============================================================
+   تم لایت
+============================================================ */
 body.theme-light .note-editor-modal { color: #2a1f14; }
 body.theme-light .note-editor-title,
 body.theme-light .note-editor-content { color: #2a1f14 !important; }
 body.theme-light .note-editor-title::placeholder,
-body.theme-light .note-editor-content::placeholder { color: rgba(42, 31, 20, 0.35); }
+body.theme-light .note-editor-content:empty::before { color: rgba(42, 31, 20, 0.35); }
 body.theme-light .note-editor-close { background: rgba(0, 0, 0, 0.06); color: #2a1f14; }
 body.theme-light .note-editor-toolbar { border-top-color: rgba(0, 0, 0, 0.1); }
-body.theme-light .note-editor-icon {
+body.theme-light .note-editor-tool-btn {
   border-color: rgba(0, 0, 0, 0.12);
   background: rgba(0, 0, 0, 0.04);
   color: #2a1f14;
 }
-body.theme-light .note-editor-icon:hover { background: rgba(0, 0, 0, 0.1); }
-body.theme-light .note-editor-popover {
-  background: rgba(255, 252, 245, 0.95) !important;
-  border-color: rgba(120, 90, 50, 0.22) !important;
-  color: #2a1f14;
+body.theme-light .note-editor-tool-btn:hover { background: rgba(0, 0, 0, 0.1); }
+body.theme-light .note-attach-item {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.1);
 }
-body.theme-light .nep-title { color: rgba(42, 31, 20, 0.65); border-bottom-color: rgba(0, 0, 0, 0.08); }
-body.theme-light .nep-item, body.theme-light .nep-tag-item { color: #2a1f14; }
-body.theme-light .nep-item:hover { background: rgba(0, 0, 0, 0.06); }
-body.theme-light .nep-tag-item:hover { background: rgba(0, 0, 0, 0.05); }
+body.theme-light .note-attach-name { color: #2a1f14; }
+body.theme-light .note-attach-size { color: rgba(42, 31, 20, 0.55); }
+body.theme-light .note-attach-icon { background: rgba(0, 0, 0, 0.06); color: #2a1f14; }
 
 /* تم دارک */
 body.theme-dark .note-editor-modal {
-  background: rgba(15, 23, 42, 0.55) !important;
   border-color: rgba(255, 255, 255, 0.15) !important;
 }
-body.theme-dark .note-editor-popover { background: rgba(15, 23, 42, 0.85) !important; }
 
 /* موبایل */
 @media (max-width: 480px) {
   .note-editor-modal {
-    padding: 18px 14px 14px;
+    padding: 18px 12px 12px;
     border-radius: 20px;
     min-height: 0;
-    max-height: 95vh;
+    max-height: 96vh;
   }
   .note-editor-title { font-size: 17px; }
-  .note-editor-content { min-height: 150px; max-height: 45vh; font-size: 13px; }
-  .note-editor-icon { width: 30px; height: 30px; }
-  .note-editor-save { width: 36px; height: 36px; }
-  .nep-color-grid { grid-template-columns: repeat(5, 1fr); gap: 6px; }
+  .note-editor-content { min-height: 140px; max-height: 40vh; font-size: 13px; }
+  .note-editor-tool-btn { padding: 7px 9px; font-size: 11.5px; }
+  .note-editor-tool-btn span { font-size: 10.5px; }
+  .note-editor-save { padding: 7px 12px; font-size: 12px; }
+  .note-editor-save span { font-size: 11.5px; }
+  .note-attach-info { max-width: 110px; }
 }

@@ -1315,19 +1315,13 @@ export function initTasks() {
       const inputWrap = document.querySelector('.task-new-input-wrap');
       const toolbar = document.querySelector('.tn-toolbar');
 
-      if (tab === 'tasks') {
-        if (titleEl) titleEl.style.display = '';
-        if (descEl) descEl.style.display = '';
-        if (toolbar) toolbar.style.display = '';
+            if (tab === 'tasks') {
         if (inputWrap) {
           inputWrap.classList.remove('note-mode');
           inputWrap.onclick = null;
         }
         renderTasks();
       } else {
-        if (titleEl) titleEl.style.display = 'none';
-        if (descEl) descEl.style.display = 'none';
-        if (toolbar) toolbar.style.display = 'none';
         if (inputWrap) {
           inputWrap.classList.add('note-mode');
           inputWrap.onclick = (e) => {
