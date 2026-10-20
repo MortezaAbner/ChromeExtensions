@@ -13,10 +13,9 @@ import { initTasks } from './modules/tasks/tasks.js';
 import { initNotes } from './modules/notes/notes.js';
 
 /* ============================================================
-   🆕 Pull-to-Refresh برای PWA (موبایل و تبلت)
+   🆕 Pull-to-Refresh برای PWA (موبایل و تبلت) - اصلاح شده
 ============================================================ */
 (function initPullToRefresh() {
-  // فقط توی حالت standalone (PWA نصب‌شده) و روی تاچ فعال بشه
   const isStandalone = window.matchMedia('(display-mode: standalone)').matches
     || window.navigator.standalone === true;
   const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
@@ -27,8 +26,13 @@ import { initNotes } from './modules/notes/notes.js';
   let currentY = 0;
   let isPulling = false;
   let indicator = null;
-  const THRESHOLD = 80;   // چقدر بکشه که رفرش بشه
-  const MAX_PULL = 120;   // حداکثر کشش
+  const THRESHOLD = 80;
+  const MAX_PULL = 120;
+
+  // ✅ تابع کمکی برای گرفتن دقیق میزان اسکرول
+  const getScrollTop = () => {
+    return window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
+  };
 
   function createIndicator() {
     if (indicator) return;
@@ -64,16 +68,21 @@ import { initNotes } from './modules/notes/notes.js';
   }
 
   document.addEventListener('touchstart', (e) => {
-    // فقط اگه صفحه در بالاترین نقطه باشه
-    if (window.scrollY > 0) return;
-    // اگه لمس روی input یا textarea بود، فعال نشه
+    if (getScrollTop() > 0) return;
+    // ✅ بررسی اینکه آیا لمس داخل یک عنصر اسکرول‌شونده که خودش پایین رفته شروع شده یا نه
+    let target = e.target;
+    while (target && target !== document.body && target !== document.documentElement) {
+      if (target.scrollTop > 0) return;
+      target = target.parentElement;
+    }
+
     if (e.target.closest('input, textarea, [contenteditable]')) return;
     startY = e.touches[0].clientY;
     isPulling = false;
   }, { passive: true });
 
   document.addEventListener('touchmove', (e) => {
-    if (window.scrollY > 0) return;
+    if (getScrollTop() > 0) return;
     currentY = e.touches[0].clientY;
     const diff = currentY - startY;
     if (diff > 0 && !isPulling) {
@@ -87,7 +96,6 @@ import { initNotes } from './modules/notes/notes.js';
       indicator.style.transition = 'none';
       indicator.style.transform = `translateX(-50%) translateY(${pull + 30}px)`;
       indicator.style.opacity = '1';
-      // اگه از حد رد شد، رنگ عوض کن
       if (pull >= THRESHOLD / 2) {
         indicator.style.background = 'rgba(34, 197, 94, 0.95)';
         indicator.style.transform = `translateX(-50%) translateY(${pull + 30}px) rotate(180deg)`;
@@ -105,13 +113,11 @@ import { initNotes } from './modules/notes/notes.js';
 
     if (indicator) {
       if (pull >= THRESHOLD / 2) {
-        // رفرش
         indicator.style.transition = 'transform 0.3s ease, opacity 0.3s ease';
         indicator.style.transform = 'translateX(-50%) translateY(90px)';
         indicator.style.opacity = '0';
         setTimeout(() => window.location.reload(), 200);
       } else {
-        // برگرد به جای اول
         indicator.style.transition = 'transform 0.25s ease, opacity 0.25s ease';
         indicator.style.transform = 'translateX(-50%) translateY(0)';
         indicator.style.opacity = '0';
@@ -141,8 +147,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   initDock();
   initCalendar();
   initConverter();
-  initTasks();           // ✅ ماژول جدید تسک و یادداشت
-  initNotes();  // 🆕
+  initTasks();           // ✅ تسک‌ها
+  initNotes();           // ✅ یادداشت‌ها
 
   // ---------- احراز هویت و سینک ----------
   await initAuth();
@@ -176,7 +182,6 @@ if (!(typeof chrome !== 'undefined' && chrome.extension)) {
       navigator.serviceWorker.register('./sw.js')
         .then(reg => {
           console.log('✅ Service Worker ثبت شد:', reg.scope);
-          // هر بار چک کن نسخه جدید هست یا نه
           reg.update();
         })
         .catch(err => console.warn('❌ خطا در ثبت SW:', err));

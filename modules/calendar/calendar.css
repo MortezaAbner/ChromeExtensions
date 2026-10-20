@@ -106,6 +106,7 @@
   display: block !important;
 }
 
+/* ✅ اصلاح شبکه تقویم: اضافه کردن padding-bottom برای فاصله از دکمه‌ها */
 .cal-grid-days {
   display: grid !important;
   grid-template-columns: repeat(7, 1fr) !important;
@@ -115,6 +116,19 @@
   align-content: start !important;
   margin-top: 3px !important;
   width: 100% !important;
+  margin-bottom: 8px !important; /* 👈 این خط فاصله ایجاد می‌کنه */
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+.cal-bottom-bar {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+  margin-top: 4px;
+  position: relative !important;
+  z-index: 10 !important; /* 👈 این خط دکمه‌ها رو میاره روی دایره */
+  background: transparent !important; /* 👈 شفاف می‌مونه */
 }
 
 .cal-day {
@@ -164,15 +178,21 @@
   z-index: 2;
 }
 
+/* ✅ اصلاح نوار پایین: بالاتر از دایره قرار می‌گیرد */
 .cal-bottom-bar {
   display: flex;
   gap: 6px;
   flex-shrink: 0;
   margin-top: 4px;
+  position: relative !important;
+  z-index: 20 !important; /* 👈 بالاتر از شبکه تقویم */
+  background: rgba(0, 0, 0, 0.1); /* پس‌زمینه ملایم برای جلوگیری از دیده شدن دایره از پشت */
+  border-radius: 12px;
+  padding: 2px;
 }
 .cal-bottom-bar button {
   flex: 1;
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.18);
   color: inherit;
   padding: 7px;
@@ -187,7 +207,7 @@
   justify-content: center;
   gap: 5px;
 }
-.cal-bottom-bar button:hover { background: rgba(255, 255, 255, 0.14); }
+.cal-bottom-bar button:hover { background: rgba(255, 255, 255, 0.15); }
 
 /* ---------- پاپ‌آپ انتخاب ماه/سال ---------- */
 .cal-picker {
@@ -404,6 +424,7 @@ body.theme-light .cal-bottom-bar button {
   border-color: rgba(0, 0, 0, 0.12);
 }
 body.theme-light .cal-bottom-bar button:hover { background: rgba(0, 0, 0, 0.1); }
+body.theme-light .cal-bottom-bar { background: rgba(0,0,0,0.02); }
 
 body.theme-light .cal-picker,
 body.theme-light .cal-events-popup {
@@ -449,6 +470,7 @@ body.theme-dark .cal-events-popup {
   -webkit-backdrop-filter: none !important;
   border-color: rgba(255, 255, 255, 0.15) !important;
 }
+body.theme-dark .cal-bottom-bar { background: rgba(0,0,0,0.2); }
 
 /* ============ موبایل ============ */
 
@@ -469,6 +491,7 @@ body.theme-dark .cal-events-popup {
   .cal-arrow { width: 28px; height: 28px; }
   .cal-day-dot { width: 4px; height: 4px; bottom: 2px; }
 }
+
 /* ============================================================
    مبدل تاریخ
 ============================================================ */
