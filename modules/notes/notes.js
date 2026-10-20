@@ -1,4 +1,4 @@
-/* ============ ماژول یادداشت — آبنر v4 ============ */
+/* ============ ماژول یادداشت — آبنر v5 (نهایی) ============ */
 
 import {
   sharedState, loadAllState, saveAllState, getTags, findTag,
@@ -34,7 +34,7 @@ const NOTE_COLOR_MAP = {
 const FA_WEEKDAYS = ['شنبه','یکشنبه','دوشنبه','سه‌شنبه','چهارشنبه','پنجشنبه','جمعه'];
 const FA_MONTHS = ['فروردین','اردیبهشت','خرداد','تیر','مرداد','شهریور','مهر','آبان','آذر','دی','بهمن','اسفند'];
 const FIRED_KEY = 'abner_fired_reminders';
-const MAX_ATTACH_SIZE = 10 * 1024 * 1024; // 10MB
+const MAX_ATTACH_SIZE = 10 * 1024 * 1024;
 
 const notesState = {
   activeTab: 'tasks',
@@ -50,6 +50,7 @@ let reminderInterval = null;
 let pendingAttachments = [];
 let dateView = { year: 0, month: 0 };
 let selectedDateInPicker = null;
+let dateViewInitialized = false;
 
 const notes = () => sharedState.notes;
 
@@ -128,7 +129,6 @@ function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 function getNoteColorStyle(id) { return NOTE_COLOR_MAP[id] || NOTE_COLOR_MAP.default; }
-function findNoteColor(id) { return NOTE_COLORS.find(c => c.id === id) || NOTE_COLORS[0]; }
 function fileSizeFmt(bytes) {
   if (bytes < 1024) return bytes + ' B';
   if (bytes < 1024*1024) return (bytes/1024).toFixed(1) + ' KB';
@@ -345,6 +345,7 @@ function openNoteEditor(initialData = null, editId = null) {
     };
   }
   pendingAttachments = [...noteEditorDraft.attachments];
+  dateViewInitialized = false;
 
   if ('Notification' in window && Notification.permission === 'default') {
     try { Notification.requestPermission(); } catch (_) {}
@@ -358,15 +359,8 @@ function openNoteEditor(initialData = null, editId = null) {
     document.body.appendChild(overlay);
   }
   overlay.classList.remove('hidden');
-  overlay.onclick = (e) => {
-    if (e.target === overlay) { closeNoteEditor(); return; }
-    const pop = document.getElementById('activeNotePopover');
-    if (pop) {
-      if (pop.contains(e.target)) return;
-      if (e.target.closest('[data-note-tool]')) return;
-      pop.remove();
-    }
-  };
+  // ⚠️ حذف کامل رفتار بسته شدن با کلیک بیرون
+  overlay.onclick = null;
   renderNoteEditor();
   setTimeout(() => document.getElementById('noteEditorTitle')?.focus(), 100);
 }
@@ -377,6 +371,7 @@ function closeNoteEditor() {
   noteEditorDraft = null;
   noteEditorId = null;
   pendingAttachments = [];
+  dateViewInitialized = false;
 }
 
 function renderNoteEditor() {
@@ -450,6 +445,21 @@ function renderNoteEditor() {
   document.getElementById('noteEditorClose')?.addEventListener('click', closeNoteEditor);
   document.getElementById('noteEditorSave')?.addEventListener('click', saveNoteEditor);
 
+  // 🔑 sync title & content به draft (تا با re-render از دست نرن)
+  const titleEl = document.getElementById('noteEditorTitle');
+  titleEl?.addEventListener('input', () => { noteEditorDraft.title = titleEl.value; });
+  const contentEl = document.getElementById('noteEditorContent');
+  contentEl?.addEventListener('input', () => { noteEditorDraft.content = contentEl.innerHTML; });
+  contentEl?.addEventListener('click', (e) => {
+    const box = e.target.closest('.ncb-box');
+    if (!box) return;
+    e.preventDefault();
+    const line = box.parentElement;
+    const checked = line.classList.toggle('checked');
+    box.textContent = checked ? '☑' : '☐';
+    noteEditorDraft.content = contentEl.innerHTML;
+  });
+
   overlay.querySelectorAll('[data-note-tool]').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -459,10 +469,7 @@ function renderNoteEditor() {
         renderNoteEditor();
         return;
       }
-      if (kind === 'attach') {
-        openAttachPicker();
-        return;
-      }
+      if (kind === 'attach') { openAttachPicker(); return; }
       openNotePopover(kind, btn);
     });
   });
@@ -476,20 +483,10 @@ function renderNoteEditor() {
       renderNoteEditor();
     });
   });
-
-  const contentEl = document.getElementById('noteEditorContent');
-  contentEl?.addEventListener('click', (e) => {
-    const box = e.target.closest('.ncb-box');
-    if (!box) return;
-    e.preventDefault();
-    const line = box.parentElement;
-    const checked = line.classList.toggle('checked');
-    box.textContent = checked ? '☑' : '☐';
-  });
 }
 
 /* ============================================================
-   🎯 Popover System — using SAME classes as tasks
+   Popover System
 ============================================================ */
 function closeNotePopover() {
   const pop = document.getElementById('activeNotePopover');
@@ -536,6 +533,10 @@ function openNotePopover(kind, triggerBtn) {
   pop.dataset.kind = kind;
 
   if (kind === 'date') {
+    if (!dateViewInitialized) {
+      initDateViewOnce();
+      dateViewInitialized = true;
+    }
     pop.className = 'tasks-inline-popover date-picker-popover';
     pop.innerHTML = renderNoteDatePickerHTML();
   } else if (kind === 'tag') {
@@ -559,7 +560,21 @@ function openNotePopover(kind, triggerBtn) {
   bindNotePopoverEvents(pop, kind);
 }
 
-/* ---------- Tag Popover (same as tasks) ---------- */
+/* ---------- Init Date View (فقط یک بار) ---------- */
+function initDateViewOnce() {
+  const today = todayJalali();
+  if (noteEditorDraft.dueDate) {
+    const dt = new Date(noteEditorDraft.dueDate);
+    const j = toJalaali(dt.getFullYear(), dt.getMonth() + 1, dt.getDate());
+    dateView = { year: j.jy, month: j.jm };
+    selectedDateInPicker = { y: j.jy, m: j.jm, d: j.jd };
+  } else {
+    dateView = { year: today.y, month: today.m };
+    selectedDateInPicker = null;
+  }
+}
+
+/* ---------- Tag Popover ---------- */
 function renderNoteTagPopoverHTML() {
   const d = noteEditorDraft;
   return `
@@ -585,7 +600,7 @@ function renderNoteTagPopoverHTML() {
     </div>`;
 }
 
-/* ---------- Color Popover (list like tasks) ---------- */
+/* ---------- Color Popover ---------- */
 function renderNoteColorPopoverHTML() {
   const d = noteEditorDraft;
   return `
@@ -606,37 +621,16 @@ function renderNoteReminderPopoverHTML() {
   return `
     <div class="ip-title">یادآور</div>
     <div class="ip-list">
-      <button class="ip-item" data-remind="30m">
-        <span class="ip-dot" style="background:#fbbf24"></span>
-        <span>۳۰ دقیقه دیگر</span>
-      </button>
-      <button class="ip-item" data-remind="1h">
-        <span class="ip-dot" style="background:#fbbf24"></span>
-        <span>۱ ساعت دیگر</span>
-      </button>
-      <button class="ip-item" data-remind="3h">
-        <span class="ip-dot" style="background:#fbbf24"></span>
-        <span>۳ ساعت دیگر</span>
-      </button>
-      <button class="ip-item" data-remind="tomorrow9">
-        <span class="ip-dot" style="background:#60a5fa"></span>
-        <span>فردا ساعت ۹ صبح</span>
-      </button>
-      <button class="ip-item" data-remind="tomorrow18">
-        <span class="ip-dot" style="background:#60a5fa"></span>
-        <span>فردا ساعت ۱۸</span>
-      </button>
-      <button class="ip-item" data-remind="week">
-        <span class="ip-dot" style="background:#22c55e"></span>
-        <span>یک هفته دیگر</span>
-      </button>
+      <button class="ip-item" data-remind="30m"><span class="ip-dot" style="background:#fbbf24"></span><span>۳۰ دقیقه دیگر</span></button>
+      <button class="ip-item" data-remind="1h"><span class="ip-dot" style="background:#fbbf24"></span><span>۱ ساعت دیگر</span></button>
+      <button class="ip-item" data-remind="3h"><span class="ip-dot" style="background:#fbbf24"></span><span>۳ ساعت دیگر</span></button>
+      <button class="ip-item" data-remind="tomorrow9"><span class="ip-dot" style="background:#60a5fa"></span><span>فردا ساعت ۹ صبح</span></button>
+      <button class="ip-item" data-remind="tomorrow18"><span class="ip-dot" style="background:#60a5fa"></span><span>فردا ساعت ۱۸</span></button>
+      <button class="ip-item" data-remind="week"><span class="ip-dot" style="background:#22c55e"></span><span>یک هفته دیگر</span></button>
     </div>
     ${r ? `<div class="ip-divider"></div>
       <div class="ip-list">
-        <button class="ip-item" data-remind="clear" style="color:#fca5a5">
-          <span class="ip-dot" style="background:#f87171"></span>
-          <span>حذف یادآور فعلی</span>
-        </button>
+        <button class="ip-item" data-remind="clear" style="color:#fca5a5"><span class="ip-dot" style="background:#f87171"></span><span>حذف یادآور فعلی</span></button>
       </div>` : ''}`;
 }
 
@@ -669,18 +663,9 @@ function renderNoteFontPopoverHTML() {
     </div>`;
 }
 
-/* ---------- Date Picker (same as tasks) ---------- */
+/* ---------- Date Picker HTML (بدون ریست state) ---------- */
 function renderNoteDatePickerHTML() {
   const today = todayJalali();
-  if (noteEditorDraft.dueDate) {
-    const dt = new Date(noteEditorDraft.dueDate);
-    const j = toJalaali(dt.getFullYear(), dt.getMonth() + 1, dt.getDate());
-    dateView = { year: j.jy, month: j.jm };
-    selectedDateInPicker = { y: j.jy, m: j.jm, d: j.jd };
-  } else {
-    dateView = { year: today.y, month: today.m };
-    selectedDateInPicker = null;
-  }
   const daysInMonth = getDaysInJalaliMonth(dateView.year, dateView.month);
   const firstGreg = toGregorian(dateView.year, dateView.month, 1);
   const firstDate = new Date(firstGreg.gy, firstGreg.gm - 1, firstGreg.gd);
@@ -809,6 +794,7 @@ function bindNotePopoverEvents(pop, kind) {
           contentEl?.focus();
           document.execCommand(fmt, false, null);
         }
+        if (contentEl) noteEditorDraft.content = contentEl.innerHTML;
         closeNotePopover();
       });
     });
@@ -1093,7 +1079,18 @@ export function initNotes() {
     }
   });
 
-  document.addEventListener('click', (e) => {
+  // 🔑 فقط Esc برای بستن
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    const overlay = document.getElementById('noteEditorOverlay');
+    if (!overlay || overlay.classList.contains('hidden')) return;
+    const pop = document.getElementById('activeNotePopover');
+    if (pop) { pop.remove(); return; }
+    closeNoteEditor();
+  });
+
+  // 🔑 بستن زیرپاپ‌آورها با pointerdown (نه کلیک روی مودال)
+  document.addEventListener('pointerdown', (e) => {
     const pop = document.getElementById('activeNotePopover');
     if (!pop) return;
     if (pop.contains(e.target)) return;
